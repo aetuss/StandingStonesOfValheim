@@ -76,24 +76,19 @@ namespace StandingStonesOfValheim
             for (int y = 0; y < size; y++)
                 for (int x = 0; x < size; x++)
                 {
+                    // Like the game's own effect icons: the shape alone, bright with a dark rim, no
+                    // background; a soft glow of the stone's colour around it.
                     Vector2 uv = new Vector2((x + 0.5f) / size, (y + 0.5f) / size);
-                    // A standing stone's outline: a tall rounded shape, a little narrower at the top.
-                    float halfWidth = Mathf.Lerp(0.36f, 0.3f, uv.y);
-                    float dx = Mathf.Abs(uv.x - 0.5f) / halfWidth;
-                    float dy = uv.y < 0.82f ? 0f : (uv.y - 0.82f) / 0.16f;
-                    float edge = 1f - Mathf.Sqrt(dx * dx + dy * dy);
-                    if (uv.y < 0.04f || edge <= 0f) { pixels[y * size + x] = Color.clear; continue; }
-                    float noise = Mathf.PerlinNoise(uv.x * 9f, uv.y * 9f) * 0.12f;
-                    Color stoneColor = new Color(0.32f + noise, 0.33f + noise, 0.35f + noise, 1f) * Mathf.Lerp(0.7f, 1f, Mathf.Clamp01(edge * 4f));
-                    stoneColor.a = Mathf.Clamp01(edge * 24f);
-                    // Scale the rune into the stone's middle.
-                    Vector2 runeUv = new Vector2((uv.x - 0.5f) / 0.62f + 0.5f, (uv.y - 0.5f) / 0.7f + 0.5f);
+                    Vector2 runeUv = new Vector2((uv.x - 0.5f) / 0.9f + 0.5f, (uv.y - 0.5f) / 0.95f + 0.5f);
                     float d = Distance(strokes, runeUv);
-                    float core = Mathf.Clamp01((0.06f - d) / 0.02f);
-                    float halo = Mathf.Clamp01((0.16f - d) / 0.1f) * 0.6f;
-                    Color c = Color.Lerp(stoneColor, glow * 1.1f, halo * 0.6f);
-                    c = Color.Lerp(c, Color.Lerp(glow, Color.white, 0.45f), core);
-                    c.a = stoneColor.a;
+                    float core = Mathf.Clamp01((0.075f - d) / 0.018f);
+                    float rim = Mathf.Clamp01((0.115f - d) / 0.018f);
+                    float halo = Mathf.Clamp01((0.24f - d) / 0.13f);
+                    Color bright = Color.Lerp(glow, Color.white, 0.35f + 0.35f * Mathf.Clamp01(1f - d / 0.05f));
+                    Color c = new Color(glow.r, glow.g, glow.b, halo * halo * 0.45f);
+                    c = Color.Lerp(c, new Color(0.06f, 0.05f, 0.04f, 1f), rim);
+                    c = Color.Lerp(c, bright, core);
+                    c.a = Mathf.Max(c.a, Mathf.Max(rim, core));
                     pixels[y * size + x] = c;
                 }
             tex.SetPixels(pixels);

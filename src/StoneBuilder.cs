@@ -20,6 +20,7 @@ namespace StandingStonesOfValheim
         const int RingStones = 9;
 
         static GameObject root;
+        static float faceDepth; // how far the pillar's faces are from its middle
         static System.Random random;
 
         internal static void RegisterLocations()
@@ -45,13 +46,21 @@ namespace StandingStonesOfValheim
             Bounds b = LocalBounds(pillar);
             if (b.size.y > 0.01f) pillar.transform.localScale = Vector3.one * (PillarHeight / b.size.y);
             b = LocalBounds(pillar);
+            // Its faces look along z (the carvings and props are laid out that way).
+            if (b.size.x < b.size.z)
+            {
+                pillar.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+                b = LocalBounds(pillar);
+            }
+            Plugin.Debug(stone.LocationName + " pillar size " + b.size.ToString("F2"));
             Move(pillar, b, new Vector3(0f, -0.35f, 0f));
             b = LocalBounds(pillar);
             Tint(pillar, stone.Glow);
             pillar.AddComponent<StandingStone>().m_stoneId = stone.Id;
-            Carvings(stone, b);
+            Carvings(stone, b, pillar.transform);
             Light(stone, b);
             Ring();
+            faceDepth = Mathf.Max(b.max.z, -b.min.z);
             Props(stone);
             Level();
 
@@ -118,11 +127,12 @@ namespace StandingStonesOfValheim
             Plugin.Debug(text);
         }
 
-        // The god's rune, glowing on both faces of the pillar, about two thirds of the way up.
-        static void Carvings(Stone stone, Bounds b)
+        // The god's rune, glowing on both faces of the pillar, about two thirds of the way up. The faces
+        // aren't flat, so each rune settles onto its face when the stone is loaded (RuneCarving).
+        static void Carvings(Stone stone, Bounds b, Transform pillar)
         {
             Sprite sprite = Runes.Carving(stone);
-            float size = Mathf.Min(1.1f, b.size.x * 0.7f);
+            float size = Mathf.Min(1.1f, b.size.x * 0.4f);
             for (int side = 0; side < 2; side++)
             {
                 GameObject go = new GameObject("SSoV_Rune");
@@ -134,6 +144,7 @@ namespace StandingStonesOfValheim
                 SpriteRenderer renderer = go.AddComponent<SpriteRenderer>();
                 renderer.sprite = sprite;
                 renderer.color = Color.white;
+                go.AddComponent<RuneCarving>().m_pillar = pillar;
             }
         }
 
@@ -172,56 +183,96 @@ namespace StandingStonesOfValheim
             }
         }
 
-        // What belongs to each god, inside the ring by the pillar.
+        // What belongs to each god, inside the ring, in front of (side -1) or behind (side 1) the pillar's
+        // faces: x along the face, d metres out from it.
         static void Props(Stone stone)
         {
             switch (stone.Id)
             {
                 case "Tyr":
-                    Lying("SwordBronze", 1.4f, 1.6f, 30f, 1.3f);
-                    Lying("ShieldWood", -1.5f, 1.4f, 200f, 1f);
-                    Lying("SpearFlint", -0.4f, -1.8f, 100f, 1.8f);
+                    Lying("SwordBronze", 0.9f, 0.9f, -1, 30f, 1.3f);
+                    Lying("ShieldWood", -1f, 1.1f, -1, 200f, 1f);
+                    Lying("SpearFlint", 0.2f, 1.1f, 1, 100f, 1.8f);
                     break;
                 case "Bragi":
-                    Standing("fire_pit", 0f, 2.2f, 0f, 1.3f);
-                    Standing("Tankard", 1.1f, 1.7f, 40f, 0.3f);
-                    Standing("Tankard", -0.9f, 1.9f, 160f, 0.3f);
+                    Standing("fire_pit", 0f, 1.5f, -1, 0f, 1.3f);
+                    Standing("Tankard", 1.2f, 1.2f, -1, 40f, 0.3f);
+                    Standing("Tankard", -1.2f, 1.3f, -1, 160f, 0.3f);
                     break;
                 case "Frigg":
-                    Standing("piece_spinningwheel", -1.7f, 1.3f, 40f, 1.5f);
-                    Standing("Pickable_Flax_Wild", 1.5f, 1.5f, 0f, 1f);
-                    Standing("Pickable_Flax_Wild", 1.9f, 0.9f, 80f, 1f);
+                    Standing("piece_spinningwheel", -1f, 1.3f, -1, 20f, 1.5f);
+                    Standing("Pickable_Flax_Wild", 1f, 0.9f, -1, 0f, 1f);
+                    Standing("Pickable_Flax_Wild", 1.4f, 1.5f, -1, 80f, 1f);
                     break;
                 case "Freyr":
-                    Lying("AxeBronze", 1.4f, 1.5f, 20f, 1.1f);
-                    Lying("PickaxeAntler", -1.4f, 1.5f, 150f, 1.2f);
-                    Lying("FishingRod", 0.2f, -1.9f, 80f, 1.8f);
-                    Standing("Pickable_Barley_Wild", -1.8f, -0.8f, 0f, 1f);
+                    Lying("AxeBronze", 0.9f, 0.9f, -1, 20f, 1.1f);
+                    Lying("PickaxeAntler", -1f, 1f, -1, 150f, 1.2f);
+                    Lying("FishingRod", 0.2f, 1.1f, 1, 80f, 1.8f);
+                    Standing("Pickable_Barley_Wild", -1.2f, 1.3f, 1, 0f, 1f);
                     break;
                 case "Ullr":
-                    Lying("Bow", 1.3f, 1.6f, 25f, 1.4f);
-                    Lying("ArrowWood", -1.2f, 1.7f, 140f, 0.8f);
-                    Lying("ArrowWood", -1.4f, 1.4f, 120f, 0.8f);
-                    Lying("TrophyDeer", 0.3f, -1.9f, 200f, 0.8f);
+                    Lying("Bow", 0.8f, 0.9f, -1, 25f, 1.4f);
+                    Lying("ArrowWood", -0.9f, 1f, -1, 140f, 0.8f);
+                    Lying("ArrowWood", -1.2f, 1.3f, -1, 120f, 0.8f);
+                    Lying("TrophyDeer", 0.3f, 1.1f, 1, 200f, 0.8f);
+                    break;
+                case "Hel":
+                    Standing("crypt_skeleton_laying", 0f, 1.3f, -1, 90f, 1.7f);
+                    Standing("bone_stack", -1.2f, 1f, -1, 0f, 0.9f);
+                    Lying("TrophyDraugr", 0.8f, 1f, 1, 160f, 0.7f);
                     break;
                 case "Eir":
-                    Standing("Pickable_Thistle", 1.4f, 1.5f, 0f, 0.8f);
-                    Standing("Pickable_Thistle", -1.6f, 1.2f, 90f, 0.8f);
-                    Standing("Pickable_Dandelion", 1.7f, -0.6f, 0f, 0.6f);
-                    Standing("Pickable_Dandelion", -1.1f, -1.7f, 45f, 0.6f);
+                    Standing("Pickable_Thistle", 1f, 0.9f, -1, 0f, 0.8f);
+                    Standing("Pickable_Thistle", -1.1f, 1.1f, -1, 90f, 0.8f);
+                    Standing("Pickable_Dandelion", 0.9f, 1f, 1, 0f, 0.6f);
+                    Standing("Pickable_Dandelion", -0.8f, 1.2f, 1, 45f, 0.6f);
+                    break;
+                case "Skadi":
+                    Lying("SpearWolfFang", 0.8f, 1f, -1, 30f, 1.8f);
+                    Lying("WolfPelt", -1f, 1.1f, -1, 120f, 0.9f);
+                    Lying("TrophyWolf", 0.2f, 1.1f, 1, 200f, 0.7f);
+                    break;
+                case "Heimdall":
+                    Standing("piece_groundtorch_wood", -1.1f, 1f, -1, 0f, 1.4f);
+                    Lying("ShieldSilver", 0.9f, 1f, -1, 210f, 1f);
+                    Lying("SwordSilver", 0.2f, 1.1f, 1, 70f, 1.3f);
                     break;
                 case "Thor":
-                    Standing("StatueThor", -1.9f, 0.8f, 150f, 1.4f);
-                    Lying("SledgeIron", 1.3f, 1.6f, 60f, 1.6f);
+                    Standing("StatueThor", -1.1f, 1.4f, -1, 180f, 1.4f);
+                    Lying("SledgeIron", 0.9f, 1f, -1, 60f, 1.6f);
+                    break;
+                case "Baldr":
+                    Standing("Pickable_Dandelion", 1f, 0.9f, -1, 0f, 0.6f);
+                    Standing("Pickable_Dandelion", -1f, 1.1f, -1, 60f, 0.6f);
+                    Lying("ShieldBlackmetal", 0.2f, 1.1f, 1, 30f, 1.1f);
                     break;
                 case "Odin":
-                    Lying("StaffFireball", 1.3f, 1.6f, 20f, 1.8f);
-                    Lying("StaffGreenRoots", -1.4f, 1.5f, 160f, 1.8f);
-                    Standing("Eitr", 0.2f, -1.9f, 0f, 0.4f);
+                    Lying("StaffFireball", 0.9f, 0.9f, -1, 20f, 1.8f);
+                    Lying("StaffGreenRoots", -1f, 1f, -1, 160f, 1.8f);
+                    Standing("Eitr", 0.2f, 1f, 1, 0f, 0.4f);
+                    break;
+                case "Freyja":
+                    Lying("CapeFeather", 0f, 1.1f, -1, 20f, 1.4f);
+                    Standing("Feathers", -1.1f, 1f, -1, 0f, 0.4f);
+                    Standing("AmberPearl", 0.9f, 1f, 1, 0f, 0.3f);
+                    break;
+                case "Loki":
+                    Standing("fire_pit", 0f, 1.5f, -1, 0f, 1.3f);
+                    Lying("KnifeSkollAndHati", 1.1f, 1.1f, -1, 50f, 0.9f);
+                    Lying("KnifeBlackMetal", 0.3f, 1.1f, 1, 130f, 0.8f);
+                    break;
+                case "Vidarr":
+                    Lying("AxeJotunBane", 0.9f, 1f, -1, 40f, 1.4f);
+                    Lying("AxeBerzerkr", -1f, 1.1f, -1, 150f, 1.4f);
+                    Lying("TrophyFenring", 0.2f, 1.1f, 1, 200f, 0.8f);
+                    break;
+                case "Njord":
+                    Lying("FishingRod", 0.9f, 1f, -1, 30f, 1.8f);
+                    Lying("Fish1", -1f, 1f, -1, 120f, 0.6f);
+                    Lying("TrophySerpent", 0.2f, 1.2f, 1, 200f, 1.2f);
                     break;
             }
         }
-
         // Paths and fields don't run through a stone ring: the ground inside is levelled and bare.
         static void Level()
         {
@@ -240,24 +291,24 @@ namespace StandingStonesOfValheim
         }
 
         // An item lying on the ground (turned on its side), at most maxSize across.
-        static void Lying(string name, float x, float z, float rotY, float maxSize)
+        static void Lying(string name, float x, float d, int side, float rotY, float maxSize)
         {
             GameObject go = Copy(new[] { name });
             if (go == null) return;
             go.transform.localRotation = Quaternion.Euler(0f, rotY, 88f);
             Shrink(go, maxSize);
             Bounds b = LocalBounds(go);
-            Move(go, b, new Vector3(x, -0.04f * b.size.y, z));
+            Move(go, b, new Vector3(x, -0.04f * b.size.y, side * (faceDepth + d)));
         }
 
-        static void Standing(string name, float x, float z, float rotY, float maxSize)
+        static void Standing(string name, float x, float d, int side, float rotY, float maxSize)
         {
             GameObject go = Copy(new[] { name });
             if (go == null) return;
             go.transform.localRotation = Quaternion.Euler(0f, rotY, 0f);
             Shrink(go, maxSize);
             Bounds b = LocalBounds(go);
-            Move(go, b, new Vector3(x, -0.05f * b.size.y, z));
+            Move(go, b, new Vector3(x, -0.05f * b.size.y, side * (faceDepth + d)));
         }
 
         static void Shrink(GameObject go, float maxSize)
@@ -351,6 +402,32 @@ namespace StandingStonesOfValheim
         static float Range(float min, float max)
         {
             return min + (float)random.NextDouble() * (max - min);
+        }
+    }
+
+    // A rune carving settles onto the pillar's face when the stone is loaded: the face isn't flat, so it
+    // looks for the face with a ray from in front and sits just on it, turned the way the face is.
+    class RuneCarving : MonoBehaviour
+    {
+        public Transform m_pillar;
+
+        void Start()
+        {
+            if (m_pillar == null) return;
+            Vector3 inward = transform.forward;
+            Ray ray = new Ray(transform.position - inward * 1.5f, inward);
+            bool found = false;
+            RaycastHit best = new RaycastHit();
+            foreach (Collider collider in m_pillar.GetComponentsInChildren<Collider>())
+            {
+                RaycastHit hit;
+                if (!collider.enabled || !collider.Raycast(ray, out hit, 4f)) continue;
+                if (!found || hit.distance < best.distance) best = hit;
+                found = true;
+            }
+            if (!found) return;
+            transform.position = best.point + best.normal * 0.03f;
+            transform.rotation = Quaternion.LookRotation(-best.normal, Vector3.up);
         }
     }
 

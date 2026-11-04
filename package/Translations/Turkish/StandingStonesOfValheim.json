@@ -1,5 +1,6 @@
 {
   "ssov_amount": "{0} {1}",
+  "ssov_tooltip_head": "{0} ({1})",
   "ssov_read": "Oku",
   "ssov_choose": "Bu taşı seç",
   "ssov_is_chosen": "Seçtiğin taş",
@@ -9,13 +10,13 @@
   "ssov_no_power": "Seçtiğin taşın çağrılacak bir gücü yok.",
   "ssov_freyja_called": "Freyja yanında at sürüyor!",
   "ssov_freyja_used": "Freyja seni bugün zaten kutsadı. Lütfu yarın yine gelir.",
-  "ssov_freyja_blessing": "Freyja'nın lütfu",
-  "ssov_freyja_blessing_tooltip": "%{0} daha fazla hasar verirsin, her öldürdüğün düşman sağlığının %{1} kadarını geri verir.",
+  "ssov_freyja_blessing": "Lütuf",
+  "ssov_freyja_blessing_tooltip": "Freyja'nın lütfu: %{0} daha fazla hasar verirsin, her öldürdüğün düşman sağlığının %{1} kadarını geri verir.",
   "ssov_baldr_saved": "Baldr'ın ışığı darbeyi savuşturdu!",
-  "ssov_baldr_ward": "Baldr'ın ışığı",
-  "ssov_baldr_ward_tooltip": "Hiçbir şey sana zarar veremez.",
-  "ssov_hel_mark": "Hel'in damgası",
-  "ssov_hel_mark_tooltip": "Azami sağlığın ve enerjin %{0} düşük. Kalkması için mezarından eşyalarını geri al.",
+  "ssov_baldr_ward": "Işık",
+  "ssov_baldr_ward_tooltip": "Baldr'ın ışığı: hiçbir şey sana zarar veremez.",
+  "ssov_hel_mark": "Damga",
+  "ssov_hel_mark_tooltip": "Hel'in damgası: azami sağlığın ve enerjin %{0} düşük. Kalkması için mezarından eşyalarını geri al.",
   "ssov_hel_marked": "Hel seni damgaladı.",
   "ssov_hel_lifted": "Hel'in damgası silindi.",
   "ssov_hint": "Rünler sönerken {0} gösteriyor. {1}",
@@ -61,66 +62,82 @@
   "ssov_land_coast": "Kıyılar",
 
   "ssov_tyr": "Tyr'ın dikili taşı",
+  "ssov_tyr_god": "Tyr",
   "ssov_tyr_lore": "Tanrılar huzurlarını korusun diye\nelini kurdun çenesine verdi.\nBeni okuyanlar kılıcı öğrensin\nve cesaretin bedelini ödesin.",
   "ssov_tyr_effect": "Yakın dövüş silahı yeteneklerin ve Bloklama %{0} daha hızlı gelişir.",
 
   "ssov_bragi": "Bragi'nin dikili taşı",
+  "ssov_bragi_god": "Bragi",
   "ssov_bragi_lore": "Tanrıların ozanı ateşin başında söyler,\nyorgunlar yorgunluğunu unutur.\nBiraz dinlen, ey gezgin. Destan uzundur.",
   "ssov_bragi_effect": "Dinlenmiş etkisi %{0} daha uzun sürer.",
 
   "ssov_frigg": "Frigg'in dikili taşı",
+  "ssov_frigg_god": "Frigg",
   "ssov_frigg_lore": "Bulutları eğirir, her kaderi bilir,\nlakin hiçbirini söylemez.\nKoruduğu ocak hiç soğumaz,\nama adımları ağırdır.",
   "ssov_frigg_effect": "Yiyeceklerin etkisi %{0} daha uzun sürer.\nBedeli: %{1} daha yavaş koşarsın.",
 
   "ssov_freyr": "Freyr'in dikili taşı",
+  "ssov_freyr_god": "Freyr",
   "ssov_freyr_lore": "Yağmurun ve güneşin,\nhasadın ve avın efendisi.\nAşkı uğruna kılıcını verdi,\ntoprağı elleriyle işler.",
   "ssov_freyr_effect": "Odun kesme, Kazmalar, Balıkçılık ve Tarım %{0} daha hızlı gelişir.",
 
   "ssov_ullr": "Ullr'un dikili taşı",
+  "ssov_ullr_god": "Ullr",
   "ssov_ullr_lore": "Karın üstünden kemik kayaklarla geçer,\noku yolunu hiç sormaz.\nAvcı sussun,\nkiriş konuşsun.",
   "ssov_ullr_effect": "Yaylar, Arbaletler ve Gizlilik %{0} daha hızlı gelişir.",
 
   "ssov_hel": "Hel'in dikili taşı",
+  "ssov_hel_god": "Hel",
   "ssov_hel_lore": "Yüzünün yarısı güzel, yarısı mezar.\nÖlmekte olana güç verir,\nölülerin geride bıraktığını saklar.",
   "ssov_hel_effect": "Sağlığın %{1} altındayken %{0} daha fazla hasar verirsin.\nBedeli: Onun taşıyla ölürsen Hel'in damgası, mezarından eşyalarını geri alana ya da bir gün geçene dek azami sağlığından ve enerjinden %{2} alır.",
 
   "ssov_eir": "Eir'in dikili taşı",
+  "ssov_eir_god": "Eir",
   "ssov_eir_lore": "Şifacıların en iyisi,\nher diyarın her otunu bilir.\nOnun yürüdüğü yerde yaralar kapanır.",
   "ssov_eir_effect": "Sağlığın %{0} daha hızlı yenilenir.",
 
   "ssov_skadi": "Skadi'nin dikili taşı",
+  "ssov_skadi_god": "Skadi",
   "ssov_skadi_lore": "Kocasını ayaklarından seçti,\nsonra onu dağlar için bıraktı.\nSoğuk ona boyun eğer,\nlakin onu hiç terk etmez.",
   "ssov_skadi_effect": "Soğuk ve donma seni %{0} daha az etkiler, buza karşı da dirençlisin.",
 
   "ssov_heimdall": "Heimdall'ın dikili taşı",
+  "ssov_heimdall_god": "Heimdall",
   "ssov_heimdall_lore": "Otların büyüdüğünü,\nkoyunun yününün uzadığını duyar.\nGece yüz fersah öteyi görür.\nSana gelen hiçbir şey görünmeden gelemez.",
   "ssov_heimdall_effect": "{0} metre içinde sana gelen düşmanlar mini haritanda görünür.",
 
   "ssov_thor": "Thor'un dikili taşı",
+  "ssov_thor_god": "Thor",
   "ssov_thor_lore": "Hiçbir devin kaldıramadığı çekici taşır,\nüstüne bir de Midgard'ın yükünü.\nSırtın onunki kadar güçlü olsun.",
   "ssov_thor_effect": "Azami taşıma ağırlığın {0} artar.",
 
   "ssov_baldr": "Baldr'ın dikili taşı",
+  "ssov_baldr_god": "Baldr",
   "ssov_baldr_lore": "Her şey ona zarar vermeyeceğine yemin etti,\nlakin biri unutuldu.\nHer gün bir kez onun ışığı\nseni bitirecek darbeyi savuşturur.",
   "ssov_baldr_effect": "Günde bir kez, seni öldürecek bir darbeden sonra sağlığının %{0} kadarıyla ayakta kalırsın ve {1} saniye boyunca hiçbir şey sana zarar veremez.",
 
   "ssov_odin": "Odin'in dikili taşı",
+  "ssov_odin_god": "Odin",
   "ssov_odin_lore": "Dokuz gece rüzgârlı ağaçta asılı kaldı,\nmızrakla yaralandı, kendini kendine adadı\nve rünleri aldı.",
   "ssov_odin_effect": "Element büyüsü ve Kan büyüsü %{0} daha hızlı gelişir.",
 
   "ssov_freyja": "Freyja'nın dikili taşı",
+  "ssov_freyja_god": "Freyja",
   "ssov_freyja_lore": "Ölülerin hanımı,\ndüşenlerin yarısını o alır.\nHer gün bir kez yanında at sürer,\ndüşenler gücüne güç katar.",
   "ssov_freyja_effect": "Günde bir kez onun lütfunu çağır: {2} saniye boyunca %{0} daha fazla hasar verirsin ve her öldürdüğün düşman sağlığının %{1} kadarını geri verir.",
 
   "ssov_loki": "Loki'nin dikili taşı",
+  "ssov_loki_god": "Loki",
   "ssov_loki_lore": "Tanrıların hem dostu hem düşmanı,\nyüz ayrı yüzü vardır.\nSana görünmeden vurmayı öğretir,\nlakin her hilenin bir bedeli var.",
   "ssov_loki_effect": "Arkadan bıçaklama hasarın %{0} artar, gizlenirken %{1} daha sessizsin.\nBedeli: azami sağlığın %{2} azalır.",
 
   "ssov_vidarr": "Víðarr'ın dikili taşı",
+  "ssov_vidarr_god": "Víðarr",
   "ssov_vidarr_lore": "Sessiz tanrı. Ayakkabısı,\nayakkabıcıların kestiği her artıktan yapılmış.\nSonunda kurdun çenesini parçalayacak.\nO vurur. Kalkan tutmaz.",
   "ssov_vidarr_effect": "Yakın dövüş saldırıların %{0} daha fazla hasar verir.\nBedeli: Bloklama gücün %{1} azalır.",
 
   "ssov_njord": "Njord'un dikili taşı",
+  "ssov_njord_god": "Njord",
   "ssov_njord_lore": "Rüzgârın ve kıyının,\ngemilerin ve avın efendisi.\nOnu sayanlar için\ndenizi yatıştırır.",
   "ssov_njord_effect": "Dümenini tuttuğun gemi %{0} daha hızlı yol alır, yüzmek de %{1} daha az enerji harcatır."
 }

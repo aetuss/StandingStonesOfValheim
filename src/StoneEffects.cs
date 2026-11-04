@@ -19,8 +19,11 @@ namespace StandingStonesOfValheim
         {
             Stone stone = Stone;
             if (stone == null) return base.GetTooltipString();
+            // The icon's name is only the god's (the game puts the names side by side and long ones run
+            // into each other); the tooltip starts with the stone's full name and kind.
+            string head = Texts.Get("ssov_tooltip_head", stone.NameToken, "$ssov_kind_" + stone.Kind.ToString().ToLowerInvariant());
             string daily = stone.DailyText(m_character as Player);
-            return stone.EffectText() + (daily.Length > 0 ? "\n" + daily : "");
+            return head + "\n" + stone.EffectText() + (daily.Length > 0 ? "\n" + daily : "");
         }
 
         // Path stones: their skills rise faster (added like the game's own skill bonuses).
@@ -108,7 +111,7 @@ namespace StandingStonesOfValheim
                 SE_Stone se = ScriptableObject.CreateInstance<SE_Stone>();
                 se.name = stone.EffectName;
                 se.StoneId = stone.Id;
-                se.m_name = stone.NameToken;
+                se.m_name = "$" + stone.Key + "_god";
                 se.m_tooltip = "";
                 se.m_icon = Runes.Icon(stone);
                 se.m_ttl = 0f; // as long as it is chosen

@@ -73,6 +73,8 @@ namespace StandingStonesOfValheim
             if (sb.size.y > 0.01f) stone.transform.localScale = Vector3.one * (1.3f / sb.size.y);
             sb = Bounds(stone, visual.transform);
             Place(stone, sb, new Vector3(0f, 0.3f, 0.1f));
+            Plugin.Debug("Rune altar: slab " + Bounds(slab, visual.transform).size.ToString("F2") + ", stone " + Bounds(stone, visual.transform).size.ToString("F2") +
+                ", renderers " + visual.GetComponentsInChildren<Renderer>(true).Length);
             return true;
         }
 
@@ -91,6 +93,9 @@ namespace StandingStonesOfValheim
                 for (int i = scripts.Length - 1; i >= 0; i--) Object.DestroyImmediate(scripts[i]);
             }
             foreach (Rigidbody body in go.GetComponentsInChildren<Rigidbody>(true)) Object.DestroyImmediate(body);
+            // Switched-off parts (a rock's broken pieces, other looks) would only throw the size off.
+            foreach (Transform child in go.GetComponentsInChildren<Transform>(true))
+                if (child != null && child != go.transform && !child.gameObject.activeSelf) Object.DestroyImmediate(child.gameObject);
             return go;
         }
 
