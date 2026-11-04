@@ -18,7 +18,7 @@ namespace StandingStonesOfValheim
     {
         public const string Guid = "StandingStonesOfValheim";
         public const string ModName = "StandingStonesOfValheim";
-        public const string Version = "0.2.7";
+        public const string Version = "1.0.0";
 
         internal static ConfigEntry<int> CopiesPerStone;
         internal static ConfigEntry<float> StoneSpacing;
@@ -41,7 +41,7 @@ namespace StandingStonesOfValheim
                     new AcceptableValueRange<float>(100f, 3000f), Admin()));
             DailyKey = Config.Bind("2 - Keys", "DailyPowerKey", new KeyboardShortcut(KeyCode.H),
                 "The key that calls your stone's daily power (Freyja's blessing). Ignored while Alt is held, so Alt+H stays free for other mods.");
-            DebugLog = Config.Bind("9 - Debug", "DebugLog", true, // false for 1.0.0
+            DebugLog = Config.Bind("9 - Debug", "DebugLog", false,
                 "Writes how the stones were built and where they are to the BepInEx log. Useful when reporting a problem.");
             Stone.BindConfig(Config);
 
