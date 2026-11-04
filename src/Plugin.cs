@@ -18,7 +18,7 @@ namespace StandingStonesOfValheim
     {
         public const string Guid = "StandingStonesOfValheim";
         public const string ModName = "StandingStonesOfValheim";
-        public const string Version = "0.2.5";
+        public const string Version = "0.2.6";
 
         internal static ConfigEntry<int> CopiesPerStone;
         internal static ConfigEntry<float> StoneSpacing;

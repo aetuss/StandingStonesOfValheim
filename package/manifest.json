@@ -1,6 +1,6 @@
 {
   "name": "StandingStonesOfValheim",
-  "version_number": "0.2.5",
+  "version_number": "0.2.6",
   "website_url": "https://github.com/aetuss/StandingStonesOfValheim",
   "description": "Skyrim-style standing stones of the Norse gods, hidden around the world. Find them, choose one, and it guides you: faster skills, blessings, bargains with a cost, or a power once a day.",
   "dependencies": [

@@ -542,18 +542,6 @@ namespace StandingStonesOfValheim
         Light lamp;
         const float NightIntensity = 0.9f;
 
-        void Start()
-        {
-            if (Plugin.DebugLog.Value) Invoke("Tell", 3f);
-        }
-
-        // For comparing with the rune altar in the log (its vegvisir didn't show; the stones' do).
-        void Tell()
-        {
-            StandingStone stone = transform.parent != null ? transform.parent.GetComponentInChildren<StandingStone>() : null;
-            if (stone != null) Diagnostics.Describe(stone.gameObject, "Standing stone pillar in the world");
-        }
-
         void Awake()
         {
             lamp = GetComponent<Light>();

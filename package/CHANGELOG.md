@@ -1,3 +1,7 @@
+## 0.2.6
+
+- Rune altar window: messages show inside it, clicked buttons don't stay lit.
+
 ## 0.2.5
 
 - Big rocks keep 26 m clear of Ashlands, Mountain and Deep North stones; flatter ground checked 12 m around; rune altar model centred, layers kept, hitbox added, DebugLog describes it.

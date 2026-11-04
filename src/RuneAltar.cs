@@ -59,9 +59,6 @@ namespace StandingStonesOfValheim
             box.transform.localPosition = b.center;
             box.AddComponent<BoxCollider>().size = b.size;
             StoneBuilder.Tint(go, new Color(0.65f, 0.8f, 1f));
-            Diagnostics.Describe(go, "Rune altar prefab");
-            GameObject wall = PrefabManager.Instance.GetPrefab("stone_wall_1x1");
-            if (wall != null) Diagnostics.Describe(wall, "Vanilla stone_wall_1x1");
             Plugin.Debug("Rune altar from " + from + ": size " + (b.size * (Height / Mathf.Max(b.size.y, 0.01f))).ToString("F2") +
                 ", renderers " + go.GetComponentsInChildren<Renderer>(true).Length);
 
@@ -137,17 +134,6 @@ namespace StandingStonesOfValheim
     // Using the altar opens the list of stones you have found.
     class RuneAltarPiece : MonoBehaviour, Hoverable, Interactable
     {
-        void Start()
-        {
-            if (Plugin.DebugLog.Value) Invoke("Tell", 3f);
-        }
-
-        void Tell()
-        {
-            ZNetView view = GetComponent<ZNetView>();
-            Diagnostics.Describe(gameObject, view != null && view.IsValid() ? "Rune altar in the world" : "Rune altar ghost");
-        }
-
         public string GetHoverName()
         {
             return Localization.instance.Localize(RuneAltar.Token);
@@ -186,6 +172,8 @@ namespace StandingStonesOfValheim
         static GameObject panel;
         static Vector3 altarAt;
         static float openedAt;
+        static string status = ""; // what the last button did (or why it couldn't), shown above Close
+        static Color statusColor = Color.white;
         const float RowHeight = 42f;
         const float Width = 900f;
 
@@ -195,6 +183,7 @@ namespace StandingStonesOfValheim
         {
             altarAt = at;
             openedAt = Time.time;
+            status = "";
             Build(player);
         }
 
@@ -225,7 +214,7 @@ namespace StandingStonesOfValheim
             List<Stone> found = new List<Stone>();
             foreach (Stone stone in Stone.All)
                 if (StoneData.HasFound(player, stone.Id)) found.Add(stone);
-            float height = 175f + Mathf.Max(1, found.Count) * RowHeight;
+            float height = 215f + Mathf.Max(1, found.Count) * RowHeight;
             Vector2 middle = new Vector2(0.5f, 0.5f);
             panel = gui.CreateWoodpanel(GUIManager.CustomGUIFront.transform, middle, middle, Vector2.zero, Width, height, false);
 
@@ -250,11 +239,17 @@ namespace StandingStonesOfValheim
                 {
                     Player p = Player.m_localPlayer;
                     if (p == null) return;
-                    if (StoneData.HasBound(p, target.Id)) StandingStone.Choose(p, target);
+                    if (StoneData.HasBound(p, target.Id))
+                    {
+                        StandingStone.Choose(p, target);
+                        Tell(Texts.Get("ssov_chosen", target.NameToken), Color.Lerp(target.Glow, Color.white, 0.55f));
+                    }
                     else Bind(p, target);
                     if (panel != null) Build(p);
                 });
             }
+            // The game's own messages would show behind this window, so they show here instead.
+            if (status.Length > 0) Text(status, 0f, -height + 88f, Width - 80f, 17, gui.AveriaSerifBold, TextAnchor.MiddleCenter, statusColor);
             Button(Texts.Get("ssov_altar_close"), 0f, -height + 40f, Close);
             if (!wasOpen) GUIManager.BlockInput(true);
         }
@@ -282,7 +277,10 @@ namespace StandingStonesOfValheim
         {
             Vector2 top = new Vector2(0.5f, 1f);
             GameObject go = GUIManager.Instance.CreateButton(text, panel.transform, top, top, new Vector2(x, y), 140f, 34f);
-            go.GetComponent<Button>().onClick.AddListener(onClick);
+            Button button = go.GetComponent<Button>();
+            // A clicked button would stay "selected" and lit; let go of it.
+            button.onClick.AddListener(() => { if (UnityEngine.EventSystems.EventSystem.current != null) UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null); });
+            button.onClick.AddListener(onClick);
         }
 
         internal static string OfferingText(Stone stone)
@@ -313,7 +311,7 @@ namespace StandingStonesOfValheim
                 if (item == null || free) continue;
                 if (inventory.CountItems(item.m_itemData.m_shared.m_name, -1, false) < offering.Amount)
                 {
-                    player.Message(MessageHud.MessageType.Center, Texts.Get("ssov_altar_missing", OfferingText(stone)), 0, null);
+                    Tell(Texts.Get("ssov_altar_missing", OfferingText(stone)), new Color(1f, 0.55f, 0.45f));
                     return;
                 }
             }
@@ -324,8 +322,14 @@ namespace StandingStonesOfValheim
                     if (item != null) inventory.RemoveItem(item.m_itemData.m_shared.m_name, offering.Amount, -1, false);
                 }
             StoneData.AddBound(player, stone.Id);
-            player.Message(MessageHud.MessageType.Center, Texts.Get("ssov_altar_bound", stone.NameToken), 0, Runes.Icon(stone));
+            Tell(Texts.Get("ssov_altar_bound", stone.NameToken), Color.Lerp(stone.Glow, Color.white, 0.55f));
             StoneEvents.PlayChooseEffect(player);
+        }
+
+        static void Tell(string text, Color color)
+        {
+            status = text;
+            statusColor = color;
         }
     }
 }
