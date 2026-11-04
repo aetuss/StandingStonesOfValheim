@@ -1,0 +1,87 @@
+{
+  "ssov_amount": "{0} {1}",
+  "ssov_read": "Read",
+  "ssov_choose": "Choose this stone",
+  "ssov_is_chosen": "Your chosen stone",
+  "ssov_not_ready": "This stone's power isn't ready yet in this test version.",
+  "ssov_chosen": "{0} guides you now.",
+  "ssov_already_chosen": "{0} already guides you.",
+  "ssov_found": "New standing stone found: {0}",
+  "ssov_kind_path": "Path stone",
+  "ssov_kind_always": "Blessing stone",
+  "ssov_kind_cost": "Bargain stone: it gives, and it takes",
+  "ssov_kind_daily": "Power stone: once a day",
+  "ssov_land_meadows": "Meadows",
+  "ssov_land_blackforest": "Black Forest",
+  "ssov_land_swamp": "Swamp",
+  "ssov_land_mountain": "Mountain",
+  "ssov_land_plains": "Plains",
+  "ssov_land_mistlands": "Mistlands",
+  "ssov_land_ashlands": "Ashlands",
+  "ssov_land_deepnorth": "Deep North",
+  "ssov_land_coast": "Shores",
+
+  "ssov_tyr": "Tyr's Stone",
+  "ssov_tyr_lore": "He gave his hand to the wolf's jaws\nthat the gods might keep their peace.\nLet you who read me learn the blade,\nand pay what courage costs.",
+  "ssov_tyr_effect": "Your melee weapon skills and Blocking rise {0}% faster.",
+
+  "ssov_bragi": "Bragi's Stone",
+  "ssov_bragi_lore": "The skald of the gods sings by the fire,\nand the weary forget their weariness.\nRest a while, wanderer. The song is long.",
+  "ssov_bragi_effect": "Rested lasts {0}% longer.",
+
+  "ssov_frigg": "Frigg's Stone",
+  "ssov_frigg_lore": "She spins the clouds and knows every fate,\nyet speaks of none.\nThe hearth she keeps is never cold,\nbut her steps are slow.",
+  "ssov_frigg_effect": "Food lasts {0}% longer.\nCost: you run {1}% slower.",
+
+  "ssov_freyr": "Freyr's Stone",
+  "ssov_freyr_lore": "Lord of rain and sunlight,\nof the harvest and the catch.\nHe gave away his sword for love\nand works the land with his hands.",
+  "ssov_freyr_effect": "Wood Cutting, Pickaxes, Fishing and Farming rise {0}% faster.",
+
+  "ssov_ullr": "Ullr's Stone",
+  "ssov_ullr_lore": "He crosses the snow on skis of bone,\nand his arrow never asks the way.\nLet the hunter be silent,\nand the string speak.",
+  "ssov_ullr_effect": "Bows, Crossbows and Sneak rise {0}% faster.",
+
+  "ssov_hel": "Hel's Stone",
+  "ssov_hel_lore": "Half of her face is fair, half is the grave.\nShe gives strength to the dying,\nand keeps what the dead leave behind.",
+  "ssov_hel_effect": "You deal {0}% more damage while your health is below {1}%.\nCost: if you die with her stone, Hel's mark takes {2}% of your max health and stamina until you take your things back from your grave, or a day goes by.",
+
+  "ssov_eir": "Eir's Stone",
+  "ssov_eir_lore": "Best of healers,\nshe knows every herb of every land.\nWhere she has walked, wounds close.",
+  "ssov_eir_effect": "Your health regenerates {0}% faster.",
+
+  "ssov_skadi": "Skadi's Stone",
+  "ssov_skadi_lore": "She chose a husband by his feet\nand left him for the mountains.\nThe cold bows to her,\nbut it never leaves her.",
+  "ssov_skadi_effect": "The cold and freezing hold you {0}% less, and you are resistant to frost.",
+
+  "ssov_heimdall": "Heimdall's Stone",
+  "ssov_heimdall_lore": "He hears the grass grow\nand the wool on the sheep.\nHe sees a hundred leagues by night.\nNothing comes for you unseen.",
+  "ssov_heimdall_effect": "Enemies coming for you within {0} m show on your minimap.",
+
+  "ssov_thor": "Thor's Stone",
+  "ssov_thor_lore": "He carries the hammer no giant can lift,\nand the burden of Midgard besides.\nLet your back be as strong as his.",
+  "ssov_thor_effect": "Your max carry weight rises by {0}.",
+
+  "ssov_baldr": "Baldr's Stone",
+  "ssov_baldr_lore": "All things swore never to harm him,\nbut one was forgotten.\nOnce each day his light\nturns aside the blow that would end you.",
+  "ssov_baldr_effect": "Once a day, a blow that would kill you leaves you at {0}% health instead, and nothing can hurt you for {1} seconds.",
+
+  "ssov_odin": "Odin's Stone",
+  "ssov_odin_lore": "Nine nights he hung on the windswept tree,\nwounded with a spear, given to himself,\nand took up the runes.",
+  "ssov_odin_effect": "Elemental Magic and Blood Magic rise {0}% faster.",
+
+  "ssov_freyja": "Freyja's Stone",
+  "ssov_freyja_lore": "Lady of the slain,\nshe takes half of all who fall.\nOnce each day she rides beside you,\nand the fallen feed your strength.",
+  "ssov_freyja_effect": "Once a day, call on her blessing: for {2} seconds you deal {0}% more damage, and each kill gives back {1}% of your health.",
+
+  "ssov_loki": "Loki's Stone",
+  "ssov_loki_lore": "Friend and foe of the gods,\nhe wears a hundred faces.\nHe will teach you to strike unseen,\nbut every trick has its price.",
+  "ssov_loki_effect": "Your sneak attacks hit {0}% harder, and you are {1}% quieter while sneaking.\nCost: your max health is {2}% lower.",
+
+  "ssov_vidarr": "Víðarr's Stone",
+  "ssov_vidarr_lore": "The silent god. His shoe is made\nof every scrap the cobblers cut away.\nAt the end he will tear the wolf's jaws apart.\nHe strikes. He does not shield.",
+  "ssov_vidarr_effect": "Your melee attacks deal {0}% more damage.\nCost: your block power is {1}% lower.",
+
+  "ssov_njord": "Njord's Stone",
+  "ssov_njord_lore": "Lord of the wind and the shore,\nof ships and of the catch.\nHe calms the sea\nfor those who honour him.",
+  "ssov_njord_effect": "A ship you steer sails {0}% faster, and swimming costs {1}% less stamina."
+}

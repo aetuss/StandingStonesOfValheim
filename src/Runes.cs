@@ -1,0 +1,128 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace StandingStonesOfValheim
+{
+    // The Elder Futhark rune of each god's stone.
+    enum Rune { Tiwaz, Mannaz, Othala, Ingwaz, Eihwaz, Hagalaz, Berkano, Isa, Algiz, Thurisaz, Sowilo, Ansuz, Fehu, Kenaz, Uruz, Laguz }
+
+    // The runes are drawn in code as strokes: the HUD icon of the chosen stone (a dark stone with the rune
+    // glowing in its colour) and the glowing rune carved on the pillar itself.
+    static class Runes
+    {
+        // Strokes in a unit square, y up: each array is a line through its points.
+        static Vector2[][] Strokes(Rune rune)
+        {
+            switch (rune)
+            {
+                case Rune.Tiwaz: return L(P(0.5f, 0.1f, 0.5f, 0.9f), P(0.25f, 0.65f, 0.5f, 0.9f, 0.75f, 0.65f));
+                case Rune.Mannaz: return L(P(0.3f, 0.1f, 0.3f, 0.9f), P(0.7f, 0.1f, 0.7f, 0.9f), P(0.3f, 0.9f, 0.7f, 0.55f), P(0.7f, 0.9f, 0.3f, 0.55f));
+                case Rune.Othala: return L(P(0.22f, 0.1f, 0.72f, 0.6f, 0.5f, 0.88f, 0.28f, 0.6f, 0.78f, 0.1f));
+                case Rune.Ingwaz: return L(P(0.5f, 0.15f, 0.78f, 0.5f, 0.5f, 0.85f, 0.22f, 0.5f, 0.5f, 0.15f));
+                case Rune.Eihwaz: return L(P(0.5f, 0.1f, 0.5f, 0.9f), P(0.5f, 0.9f, 0.72f, 0.72f), P(0.5f, 0.1f, 0.28f, 0.28f));
+                case Rune.Hagalaz: return L(P(0.3f, 0.1f, 0.3f, 0.9f), P(0.7f, 0.1f, 0.7f, 0.9f), P(0.3f, 0.62f, 0.7f, 0.38f));
+                case Rune.Berkano: return L(P(0.35f, 0.1f, 0.35f, 0.9f), P(0.35f, 0.9f, 0.68f, 0.7f, 0.35f, 0.5f, 0.68f, 0.3f, 0.35f, 0.1f));
+                case Rune.Isa: return L(P(0.5f, 0.1f, 0.5f, 0.9f));
+                case Rune.Algiz: return L(P(0.5f, 0.1f, 0.5f, 0.9f), P(0.25f, 0.85f, 0.5f, 0.5f, 0.75f, 0.85f));
+                case Rune.Thurisaz: return L(P(0.36f, 0.1f, 0.36f, 0.9f), P(0.36f, 0.72f, 0.66f, 0.5f, 0.36f, 0.28f));
+                case Rune.Sowilo: return L(P(0.66f, 0.9f, 0.34f, 0.6f, 0.66f, 0.4f, 0.34f, 0.1f));
+                case Rune.Ansuz: return L(P(0.36f, 0.1f, 0.36f, 0.9f), P(0.36f, 0.9f, 0.7f, 0.68f), P(0.36f, 0.68f, 0.7f, 0.46f));
+                case Rune.Fehu: return L(P(0.36f, 0.1f, 0.36f, 0.9f), P(0.36f, 0.6f, 0.72f, 0.86f), P(0.36f, 0.38f, 0.72f, 0.64f));
+                case Rune.Kenaz: return L(P(0.64f, 0.85f, 0.36f, 0.5f, 0.64f, 0.15f));
+                case Rune.Uruz: return L(P(0.3f, 0.1f, 0.3f, 0.9f, 0.7f, 0.66f, 0.7f, 0.1f));
+                default: return L(P(0.42f, 0.1f, 0.42f, 0.9f, 0.7f, 0.64f)); // Laguz
+            }
+        }
+
+        static Vector2[][] L(params Vector2[][] lines) { return lines; }
+
+        static Vector2[] P(params float[] xy)
+        {
+            Vector2[] points = new Vector2[xy.Length / 2];
+            for (int i = 0; i < points.Length; i++) points[i] = new Vector2(xy[2 * i], xy[2 * i + 1]);
+            return points;
+        }
+
+        // How far (in the unit square) p is from the rune's nearest stroke.
+        static float Distance(Vector2[][] strokes, Vector2 p)
+        {
+            float best = 10f;
+            foreach (Vector2[] line in strokes)
+                for (int i = 0; i + 1 < line.Length; i++)
+                {
+                    Vector2 a = line[i], ab = line[i + 1] - a;
+                    float t = Mathf.Clamp01(Vector2.Dot(p - a, ab) / Mathf.Max(ab.sqrMagnitude, 1e-6f));
+                    best = Mathf.Min(best, (a + ab * t - p).magnitude);
+                }
+            return best;
+        }
+
+        static readonly Dictionary<string, Sprite> icons = new Dictionary<string, Sprite>();
+
+        // The HUD icon: the rune glowing on a rounded grey stone.
+        internal static Sprite Icon(Stone stone)
+        {
+            Sprite sprite;
+            if (icons.TryGetValue(stone.Id, out sprite)) return sprite;
+            const int size = 64;
+            Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            Vector2[][] strokes = Strokes(stone.Rune);
+            Color glow = stone.Glow;
+            Color[] pixels = new Color[size * size];
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    Vector2 uv = new Vector2((x + 0.5f) / size, (y + 0.5f) / size);
+                    // A standing stone's outline: a tall rounded shape, a little narrower at the top.
+                    float halfWidth = Mathf.Lerp(0.36f, 0.3f, uv.y);
+                    float dx = Mathf.Abs(uv.x - 0.5f) / halfWidth;
+                    float dy = uv.y < 0.82f ? 0f : (uv.y - 0.82f) / 0.16f;
+                    float edge = 1f - Mathf.Sqrt(dx * dx + dy * dy);
+                    if (uv.y < 0.04f || edge <= 0f) { pixels[y * size + x] = Color.clear; continue; }
+                    float noise = Mathf.PerlinNoise(uv.x * 9f, uv.y * 9f) * 0.12f;
+                    Color stoneColor = new Color(0.32f + noise, 0.33f + noise, 0.35f + noise, 1f) * Mathf.Lerp(0.7f, 1f, Mathf.Clamp01(edge * 4f));
+                    stoneColor.a = Mathf.Clamp01(edge * 24f);
+                    // Scale the rune into the stone's middle.
+                    Vector2 runeUv = new Vector2((uv.x - 0.5f) / 0.62f + 0.5f, (uv.y - 0.5f) / 0.7f + 0.5f);
+                    float d = Distance(strokes, runeUv);
+                    float core = Mathf.Clamp01((0.06f - d) / 0.02f);
+                    float halo = Mathf.Clamp01((0.16f - d) / 0.1f) * 0.6f;
+                    Color c = Color.Lerp(stoneColor, glow * 1.1f, halo * 0.6f);
+                    c = Color.Lerp(c, Color.Lerp(glow, Color.white, 0.45f), core);
+                    c.a = stoneColor.a;
+                    pixels[y * size + x] = c;
+                }
+            tex.SetPixels(pixels);
+            tex.Apply();
+            sprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
+            sprite.name = "SSoV_Icon_" + stone.Id;
+            icons[stone.Id] = sprite;
+            return sprite;
+        }
+
+        // The rune alone, glowing on a clear background, to put on the pillar.
+        internal static Sprite Carving(Stone stone)
+        {
+            const int size = 128;
+            Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            Vector2[][] strokes = Strokes(stone.Rune);
+            Color glow = stone.Glow;
+            Color[] pixels = new Color[size * size];
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float d = Distance(strokes, new Vector2((x + 0.5f) / size, (y + 0.5f) / size));
+                    float core = Mathf.Clamp01((0.045f - d) / 0.012f);
+                    float halo = Mathf.Clamp01((0.12f - d) / 0.075f);
+                    Color c = Color.Lerp(glow, Color.white, core * 0.35f);
+                    c.a = Mathf.Max(core, halo * halo * 0.55f);
+                    pixels[y * size + x] = c;
+                }
+            tex.SetPixels(pixels);
+            tex.Apply();
+            Sprite sprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
+            sprite.name = "SSoV_Rune_" + stone.Id;
+            return sprite;
+        }
+    }
+}
