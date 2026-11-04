@@ -1,3 +1,7 @@
+## 0.2.4
+
+- Weapons and shields lean on the stone (grip up, shield face out), other things lie flat on their broadest side; trees and rocks keep 14 m clear of a stone, also from the next zone.
+
 ## 0.2.3
 
 - Rune altar is a small copy of the vegvisir (visible now) and, once known, can always be built; the compendium no longer cuts off the end of a text; Loki's shield and knives lean on the stone, no fire.

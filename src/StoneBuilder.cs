@@ -21,6 +21,7 @@ namespace StandingStonesOfValheim
 
         static GameObject root;
         static float faceDepth; // how far the pillar's faces are from its middle
+        static Transform pillarTransform;
         static System.Random random;
 
         internal static void RegisterLocations()
@@ -61,6 +62,7 @@ namespace StandingStonesOfValheim
             Light(stone, b);
             Ring();
             faceDepth = Mathf.Max(b.max.z, -b.min.z);
+            pillarTransform = pillar.transform;
             Props(stone);
             Level();
 
@@ -184,14 +186,14 @@ namespace StandingStonesOfValheim
         }
 
         // What belongs to each god, inside the ring, in front of (side -1) or behind (side 1) the pillar's
-        // faces: x along the face, d metres out from it.
+        // faces: x along the face, d metres out from it. Weapons and shields lean on the front face.
         static void Props(Stone stone)
         {
             switch (stone.Id)
             {
                 case "Tyr":
-                    Lying("SwordBronze", 0.9f, 0.9f, -1, 30f, 1.3f);
-                    Lying("ShieldWood", -1f, 1.1f, -1, 200f, 1f);
+                    Leaning("ShieldWood", -0.45f, -1, 1.1f);
+                    Leaning("SwordBronze", 0.35f, -1, 1.2f);
                     Lying("SpearFlint", 0.2f, 1.1f, 1, 100f, 1.8f);
                     break;
                 case "Bragi":
@@ -205,13 +207,13 @@ namespace StandingStonesOfValheim
                     Standing("Pickable_Flax_Wild", 1.4f, 1.5f, -1, 80f, 1f);
                     break;
                 case "Freyr":
-                    Lying("AxeBronze", 0.9f, 0.9f, -1, 20f, 1.1f);
-                    Lying("PickaxeAntler", -1f, 1f, -1, 150f, 1.2f);
+                    Leaning("AxeBronze", 0.4f, -1, 1f);
+                    Leaning("PickaxeAntler", -0.4f, -1, 1.1f);
                     Lying("FishingRod", 0.2f, 1.1f, 1, 80f, 1.8f);
                     Standing("Pickable_Barley_Wild", -1.2f, 1.3f, 1, 0f, 1f);
                     break;
                 case "Ullr":
-                    Lying("Bow", 0.8f, 0.9f, -1, 25f, 1.4f);
+                    Leaning("Bow", 0.3f, -1, 1.4f);
                     Lying("ArrowWood", -0.9f, 1f, -1, 140f, 0.8f);
                     Lying("ArrowWood", -1.2f, 1.3f, -1, 120f, 0.8f);
                     Lying("TrophyDeer", 0.3f, 1.1f, 1, 200f, 0.8f);
@@ -228,27 +230,27 @@ namespace StandingStonesOfValheim
                     Standing("Pickable_Dandelion", -0.8f, 1.2f, 1, 45f, 0.6f);
                     break;
                 case "Skadi":
-                    Lying("SpearWolfFang", 0.8f, 1f, -1, 30f, 1.8f);
-                    Lying("WolfPelt", -1f, 1.1f, -1, 120f, 0.9f);
+                    Leaning("SpearWolfFang", 0.4f, -1, 1.8f);
+                    Lying("WolfPelt", -0.8f, 1f, -1, 120f, 0.9f);
                     Lying("TrophyWolf", 0.2f, 1.1f, 1, 200f, 0.7f);
                     break;
                 case "Heimdall":
-                    Standing("piece_groundtorch_wood", -1.1f, 1f, -1, 0f, 1.4f);
-                    Lying("ShieldSilver", 0.9f, 1f, -1, 210f, 1f);
-                    Lying("SwordSilver", 0.2f, 1.1f, 1, 70f, 1.3f);
+                    Leaning("ShieldSilver", -0.45f, -1, 1.1f);
+                    Leaning("SwordSilver", 0.35f, -1, 1.3f);
+                    Standing("piece_groundtorch_wood", -1.4f, 1f, -1, 0f, 1.4f);
                     break;
                 case "Thor":
                     Standing("StatueThor", -1.1f, 1.4f, -1, 180f, 1.4f);
-                    Lying("SledgeIron", 0.9f, 1f, -1, 60f, 1.6f);
+                    Leaning("SledgeIron", 0.5f, -1, 1.5f);
                     break;
                 case "Baldr":
-                    Standing("Pickable_Dandelion", 1f, 0.9f, -1, 0f, 0.6f);
-                    Standing("Pickable_Dandelion", -1f, 1.1f, -1, 60f, 0.6f);
-                    Lying("ShieldBlackmetal", 0.2f, 1.1f, 1, 30f, 1.1f);
+                    Leaning("ShieldBlackmetal", 0f, -1, 1.1f);
+                    Standing("Pickable_Dandelion", 1.1f, 1f, -1, 0f, 0.6f);
+                    Standing("Pickable_Dandelion", -1.1f, 1.1f, -1, 60f, 0.6f);
                     break;
                 case "Odin":
-                    Lying("StaffFireball", 0.9f, 0.9f, -1, 20f, 1.8f);
-                    Lying("StaffGreenRoots", -1f, 1f, -1, 160f, 1.8f);
+                    Leaning("StaffFireball", 0.4f, -1, 1.8f);
+                    Leaning("StaffGreenRoots", -0.4f, -1, 1.8f);
                     Standing("Eitr", 0.2f, 1f, 1, 0f, 0.4f);
                     break;
                 case "Freyja":
@@ -257,13 +259,13 @@ namespace StandingStonesOfValheim
                     Standing("AmberPearl", 0.9f, 1f, 1, 0f, 0.3f);
                     break;
                 case "Loki":
-                    Leaning("ShieldFlametal", -0.9f, -1, 0f, 1.1f);
-                    Leaning("KnifeSkollAndHati", 0.8f, -1, 90f, 1.1f);
+                    Leaning("ShieldFlametal", -0.45f, -1, 1.1f);
+                    Leaning("KnifeSkollAndHati", 0.35f, -1, 1f);
                     Lying("KnifeBlackMetal", 0.3f, 1.1f, 1, 130f, 1.1f);
                     break;
                 case "Vidarr":
-                    Lying("AxeJotunBane", 0.9f, 1f, -1, 40f, 1.4f);
-                    Lying("AxeBerzerkr", -1f, 1.1f, -1, 150f, 1.4f);
+                    Leaning("AxeJotunBane", 0.4f, -1, 1.4f);
+                    Leaning("AxeBerzerkr", -0.4f, -1, 1.4f);
                     Lying("TrophyFenring", 0.2f, 1.1f, 1, 200f, 0.8f);
                     break;
                 case "Njord":
@@ -290,17 +292,18 @@ namespace StandingStonesOfValheim
             modifier.m_paintType = TerrainModifier.PaintType.Dirt;
         }
 
-        // An item lying on the ground (turned on its side), at most maxSize across.
+        // An item lying flat on the ground, its thinnest side down, at most maxSize across.
         static void Lying(string name, float x, float d, int side, float rotY, float maxSize)
         {
             GameObject go = Copy(new[] { name });
             if (go == null) return;
-            go.transform.localRotation = Quaternion.Euler(0f, rotY, 88f);
+            Bounds own = OwnBounds(go);
+            go.transform.localRotation = Quaternion.Euler(0f, rotY, 0f) * Quaternion.FromToRotation(Axis(Smallest(own.size)), Vector3.up);
             Shrink(go, maxSize);
             Bounds b = LocalBounds(go);
             Move(go, b, new Vector3(x, 0.02f, side * (faceDepth + d))); // on the ground, not in it: thin things vanish in grass and ash
+            Plugin.Debug("  " + name + " lying, size " + b.size.ToString("F2"));
         }
-
         static void Standing(string name, float x, float d, int side, float rotY, float maxSize)
         {
             GameObject go = Copy(new[] { name });
@@ -311,20 +314,71 @@ namespace StandingStonesOfValheim
             Move(go, b, new Vector3(x, -0.02f * b.size.y, side * (faceDepth + d)));
         }
 
-        // Something leant against the pillar's face (side -1 front, 1 back), upright and tipped a little
-        // towards the stone; turn spins it about its own height first.
-        static void Leaning(string name, float x, int side, float turn, float maxSize)
+        // A weapon or shield leant against the pillar's face (side -1 front, 1 back), the way one stands a
+        // sword and shield against a wall: upright, tipped a little towards the stone, a weapon's grip up and
+        // a shield's face out. Which end is the grip and which side the face comes from the item's "attach"
+        // point (where the hand holds it). When the stone loads, LeanOnStone moves it up to the face.
+        static void Leaning(string name, float x, int side, float maxSize)
         {
             GameObject go = Copy(new[] { name });
             if (go == null) return;
-            const float tilt = 14f;
-            go.transform.localRotation = Quaternion.Euler(-side * tilt, 0f, 0f) * Quaternion.Euler(0f, turn, 0f);
+            Bounds own = OwnBounds(go);
+            Transform attach = FindChild(go.transform, "attach");
+            Vector3 grip = attach != null ? go.transform.InverseTransformPoint(attach.position) - own.center : Vector3.zero;
+            Vector3 size = own.size;
+            int thin = Smallest(size), longest = Largest(size);
+            bool shield = size[thin] < 0.35f * size[3 - thin - longest] && size[longest] < 2f * size[3 - thin - longest];
+            Vector3 up = Axis(longest);
+            Vector3 facing = Axis(thin);
+            if (shield)
+            {
+                // The face is the side away from the arm; it looks out from the stone.
+                if (grip[thin] > 0f) facing = -facing; // facing now points out of the face
+                facing = side < 0 ? -facing : facing;  // what ends up looking along +z
+            }
+            else if (grip[longest] < 0f) up = -up;     // the grip end goes up
+            Quaternion stand = Quaternion.Inverse(Quaternion.LookRotation(facing, up));
+            float tilt = shield ? 12f : 9f;
+            go.transform.localRotation = Quaternion.Euler(-side * tilt, 0f, 0f) * stand;
             Shrink(go, maxSize);
             Bounds b = LocalBounds(go);
-            // Its top against the face; the face is a little nearer than the pillar's widest point up there.
-            Move(go, b, new Vector3(x, -0.03f, side * (faceDepth * 0.85f + b.size.z * 0.5f)));
+            Move(go, b, new Vector3(x, -0.02f, side * (faceDepth + b.size.z * 0.5f)));
+            LeanOnStone lean = go.AddComponent<LeanOnStone>();
+            lean.m_pillar = pillarTransform;
+            lean.m_side = side;
+            Plugin.Debug("  " + name + " leaning (" + (shield ? "shield" : "weapon") + ", grip " + (attach != null ? grip.ToString("F2") : "none") + "), size " + b.size.ToString("F2"));
         }
 
+        // Bounds of an item's meshes in its own (unturned) frame.
+        static Bounds OwnBounds(GameObject go)
+        {
+            bool any = false;
+            Bounds result = new Bounds();
+            foreach (MeshFilter filter in go.GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (filter.sharedMesh == null || !ActiveBelow(filter.transform, go.transform)) continue;
+                Bounds mb = filter.sharedMesh.bounds;
+                for (int i = 0; i < 8; i++)
+                {
+                    Vector3 corner = mb.center + Vector3.Scale(mb.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
+                    Vector3 p = go.transform.InverseTransformPoint(filter.transform.TransformPoint(corner));
+                    if (!any) { result = new Bounds(p, Vector3.zero); any = true; }
+                    else result.Encapsulate(p);
+                }
+            }
+            return result;
+        }
+
+        static int Smallest(Vector3 v) { return v.x <= v.y && v.x <= v.z ? 0 : v.y <= v.z ? 1 : 2; }
+        static int Largest(Vector3 v) { return v.x >= v.y && v.x >= v.z ? 0 : v.y >= v.z ? 1 : 2; }
+        static Vector3 Axis(int i) { return i == 0 ? Vector3.right : i == 1 ? Vector3.up : Vector3.forward; }
+
+        static Transform FindChild(Transform t, string name)
+        {
+            foreach (Transform child in t.GetComponentsInChildren<Transform>(true))
+                if (child.name == name) return child;
+            return null;
+        }
         static void Shrink(GameObject go, float maxSize)
         {
             Bounds b = LocalBounds(go);
@@ -442,6 +496,43 @@ namespace StandingStonesOfValheim
             if (!found) return;
             transform.position = best.point + best.normal * 0.03f;
             transform.rotation = Quaternion.LookRotation(-best.normal, Vector3.up);
+        }
+    }
+
+    // A weapon or shield leant on the pillar: when the stone loads it moves straight towards the face until
+    // its nearest point (its top, as it leans) just touches the stone. The face isn't flat, so this can only
+    // be worked out against the real collider.
+    class LeanOnStone : MonoBehaviour
+    {
+        public Transform m_pillar;
+        public int m_side;
+
+        void Start()
+        {
+            Transform root = transform.parent;
+            if (root == null || m_pillar == null) return;
+            Vector3 wallward = root.TransformDirection(new Vector3(0f, 0f, -m_side)).normalized;
+            Collider[] stone = m_pillar.GetComponentsInChildren<Collider>();
+            const float back = 2.5f;
+            // How far it can move: the smallest gap between any corner of its meshes and the stone ahead.
+            float move = float.MaxValue;
+            foreach (MeshFilter filter in GetComponentsInChildren<MeshFilter>())
+            {
+                if (filter.sharedMesh == null) continue;
+                Bounds mb = filter.sharedMesh.bounds;
+                for (int i = 0; i < 8; i++)
+                {
+                    Vector3 p = filter.transform.TransformPoint(mb.center + Vector3.Scale(mb.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1)));
+                    Ray ray = new Ray(p - wallward * back, wallward);
+                    foreach (Collider collider in stone)
+                    {
+                        RaycastHit hit;
+                        if (collider.enabled && collider.Raycast(ray, out hit, back + 3f)) move = Mathf.Min(move, hit.distance - back);
+                    }
+                }
+            }
+            if (move == float.MaxValue) return;
+            transform.position += wallward * (move - 0.02f);
         }
     }
 

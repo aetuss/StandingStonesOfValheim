@@ -102,6 +102,30 @@ namespace StandingStonesOfValheim
         }
     }
 
+    // Trees and rocks keep clear of a stone ring. The game clears the ground only for locations in the same
+    // zone as the tree or rock; one from the zone next door (a big Ashlands rock arch) could stand right in
+    // the stone. Here every stone in the zone and around it counts.
+    [HarmonyPatch(typeof(ZoneSystem), "InsideClearArea")]
+    static class StoneClearing
+    {
+        const float Radius = 14f;
+
+        static void Postfix(ZoneSystem __instance, Vector3 point, ref bool __result)
+        {
+            if (__result || __instance.m_locationInstances == null) return;
+            Vector2s zone = ZoneSystem.GetZone(point);
+            for (int dx = -1; dx <= 1; dx++)
+                for (int dy = -1; dy <= 1; dy++)
+                {
+                    ZoneSystem.LocationInstance instance;
+                    if (!__instance.m_locationInstances.TryGetValue(new Vector2s(zone.x + dx, zone.y + dy), out instance) || instance.m_location == null) continue;
+                    if (Stone.ByLocation(instance.m_location.m_prefabName) == null) continue;
+                    Vector3 at = instance.m_position;
+                    if (new Vector2(at.x - point.x, at.z - point.z).sqrMagnitude < Radius * Radius) { __result = true; return; }
+                }
+        }
+    }
+
     // While the game looks for a spot for a stone, it asks whether a similar location is too close. A spot
     // on lava (the Ashlands) gets a yes here, so the game tries another one.
     [HarmonyPatch(typeof(ZoneSystem), "HaveLocationInRange")]
