@@ -204,10 +204,22 @@ namespace StandingStonesOfValheim
                 Close();
         }
 
+        // One stone's row: its info text and its button, updated in place after a click (building the
+        // window again would make every button flash as the new ones fade in).
+        class Row
+        {
+            internal Stone Stone;
+            internal Text Info;
+            internal GameObject Button;
+            internal Text ButtonLabel;
+        }
+
+        static readonly List<Row> rows = new List<Row>();
+        static Text statusText;
+
         static void Build(Player player)
         {
-            bool wasOpen = panel != null;
-            if (wasOpen) Object.Destroy(panel);
+            if (panel != null) return;
             GUIManager gui = GUIManager.Instance;
             if (gui == null || GUIManager.CustomGUIFront == null) return;
 
@@ -217,51 +229,72 @@ namespace StandingStonesOfValheim
             float height = 215f + Mathf.Max(1, found.Count) * RowHeight;
             Vector2 middle = new Vector2(0.5f, 0.5f);
             panel = gui.CreateWoodpanel(GUIManager.CustomGUIFront.transform, middle, middle, Vector2.zero, Width, height, false);
+            rows.Clear();
 
             Text(Localization.instance.Localize(RuneAltar.Token), 0f, -38f, Width - 60f, 30, gui.AveriaSerifBold, TextAnchor.MiddleCenter, new Color(1f, 0.82f, 0.45f));
             Text(Texts.Get("ssov_altar_help"), 0f, -82f, Width - 80f, 16, gui.AveriaSerif, TextAnchor.MiddleCenter, Color.white);
 
             if (found.Count == 0) Text(Texts.Get("ssov_altar_empty"), 0f, -130f, Width - 80f, 18, gui.AveriaSerif, TextAnchor.MiddleCenter, Color.white);
-            Stone active = StoneData.Active(player);
             for (int i = 0; i < found.Count; i++)
             {
-                Stone stone = found[i];
+                Row row = new Row();
+                row.Stone = found[i];
                 float y = -130f - i * RowHeight;
-                bool bound = StoneData.HasBound(player, stone.Id);
-                Icon(stone, -Width / 2f + 45f, y);
-                Text(Localization.instance.Localize(stone.NameToken), -Width / 2f + 75f + 130f, y, 260f, 18, gui.AveriaSerifBold, TextAnchor.MiddleLeft,
-                    Color.Lerp(stone.Glow, Color.white, 0.55f));
-                string info = !bound ? Texts.Get("ssov_altar_offering", OfferingText(stone)) : stone == active ? Texts.Get("ssov_altar_chosen") : "";
-                Text(info, 120f, y, 400f, 15, gui.AveriaSerif, TextAnchor.MiddleLeft, Color.white);
-                if (stone == active && bound) continue;
-                Stone target = stone;
-                Button(Texts.Get(bound ? "ssov_altar_choose" : "ssov_altar_bind"), Width / 2f - 90f, y, () =>
-                {
-                    Player p = Player.m_localPlayer;
-                    if (p == null) return;
-                    if (StoneData.HasBound(p, target.Id))
-                    {
-                        StandingStone.Choose(p, target);
-                        Tell(Texts.Get("ssov_chosen", target.NameToken), Color.Lerp(target.Glow, Color.white, 0.55f));
-                    }
-                    else Bind(p, target);
-                    if (panel != null) Build(p);
-                });
+                Icon(row.Stone, -Width / 2f + 45f, y);
+                Text(Localization.instance.Localize(row.Stone.NameToken), -Width / 2f + 75f + 130f, y, 260f, 18, gui.AveriaSerifBold, TextAnchor.MiddleLeft,
+                    Color.Lerp(row.Stone.Glow, Color.white, 0.55f));
+                row.Info = Text("", 120f, y, 400f, 15, gui.AveriaSerif, TextAnchor.MiddleLeft, Color.white);
+                Row target = row;
+                row.Button = Button("", Width / 2f - 90f, y, () => Clicked(target));
+                row.ButtonLabel = row.Button.GetComponentInChildren<Text>();
+                rows.Add(row);
             }
             // The game's own messages would show behind this window, so they show here instead.
-            if (status.Length > 0) Text(status, 0f, -height + 88f, Width - 80f, 17, gui.AveriaSerifBold, TextAnchor.MiddleCenter, statusColor);
+            statusText = Text("", 0f, -height + 88f, Width - 80f, 17, gui.AveriaSerifBold, TextAnchor.MiddleCenter, Color.white);
             Button(Texts.Get("ssov_altar_close"), 0f, -height + 40f, Close);
-            if (!wasOpen) GUIManager.BlockInput(true);
+            Refresh(player);
+            GUIManager.BlockInput(true);
         }
 
-        static void Text(string text, float x, float y, float width, int size, Font font, TextAnchor anchor, Color color)
+        static void Clicked(Row row)
+        {
+            Player player = Player.m_localPlayer;
+            if (player == null || panel == null) return;
+            if (StoneData.HasBound(player, row.Stone.Id))
+            {
+                StandingStone.Choose(player, row.Stone);
+                Tell(Texts.Get("ssov_chosen", row.Stone.NameToken), Color.Lerp(row.Stone.Glow, Color.white, 0.55f));
+            }
+            else Bind(player, row.Stone);
+            Refresh(player);
+        }
+
+        // Each row's offering or "chosen", and its button: Bind, Choose, or none for the chosen stone.
+        static void Refresh(Player player)
+        {
+            Stone active = StoneData.Active(player);
+            foreach (Row row in rows)
+            {
+                bool bound = StoneData.HasBound(player, row.Stone.Id);
+                row.Info.text = !bound ? Texts.Get("ssov_altar_offering", OfferingText(row.Stone)) : row.Stone == active ? Texts.Get("ssov_altar_chosen") : "";
+                row.Button.SetActive(!(bound && row.Stone == active));
+                if (row.ButtonLabel != null) row.ButtonLabel.text = Texts.Get(bound ? "ssov_altar_choose" : "ssov_altar_bind");
+            }
+            if (statusText != null)
+            {
+                statusText.text = status;
+                statusText.color = statusColor;
+            }
+        }
+
+        static Text Text(string text, float x, float y, float width, int size, Font font, TextAnchor anchor, Color color)
         {
             Vector2 top = new Vector2(0.5f, 1f);
             GameObject go = GUIManager.Instance.CreateText(text, panel.transform, top, top, new Vector2(x, y), font, size, color, true, Color.black, width, RowHeight, false);
             Text label = go.GetComponent<Text>();
             if (label != null) label.alignment = anchor;
+            return label;
         }
-
         static void Icon(Stone stone, float x, float y)
         {
             GameObject go = new GameObject("icon", typeof(RectTransform), typeof(Image));
@@ -273,7 +306,7 @@ namespace StandingStonesOfValheim
             go.GetComponent<Image>().sprite = Runes.Icon(stone);
         }
 
-        static void Button(string text, float x, float y, UnityEngine.Events.UnityAction onClick)
+        static GameObject Button(string text, float x, float y, UnityEngine.Events.UnityAction onClick)
         {
             Vector2 top = new Vector2(0.5f, 1f);
             GameObject go = GUIManager.Instance.CreateButton(text, panel.transform, top, top, new Vector2(x, y), 140f, 34f);
@@ -281,6 +314,7 @@ namespace StandingStonesOfValheim
             // A clicked button would stay "selected" and lit; let go of it.
             button.onClick.AddListener(() => { if (UnityEngine.EventSystems.EventSystem.current != null) UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null); });
             button.onClick.AddListener(onClick);
+            return go;
         }
 
         internal static string OfferingText(Stone stone)

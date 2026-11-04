@@ -1,3 +1,7 @@
+## 0.2.7
+
+- Rune altar window updates in place after a click (no more flashing buttons).
+
 ## 0.2.6
 
 - Rune altar window: messages show inside it, clicked buttons don't stay lit.
