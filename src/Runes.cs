@@ -62,12 +62,16 @@ namespace StandingStonesOfValheim
         // The HUD icon: the rune glowing on a rounded grey stone.
         internal static Sprite Icon(Stone stone)
         {
+            return Icon(stone.Rune, stone.Glow, stone.Id);
+        }
+
+        internal static Sprite Icon(Rune rune, Color glow, string key)
+        {
             Sprite sprite;
-            if (icons.TryGetValue(stone.Id, out sprite)) return sprite;
+            if (icons.TryGetValue(key, out sprite)) return sprite;
             const int size = 64;
             Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-            Vector2[][] strokes = Strokes(stone.Rune);
-            Color glow = stone.Glow;
+            Vector2[][] strokes = Strokes(rune);
             Color[] pixels = new Color[size * size];
             for (int y = 0; y < size; y++)
                 for (int x = 0; x < size; x++)
@@ -95,9 +99,33 @@ namespace StandingStonesOfValheim
             tex.SetPixels(pixels);
             tex.Apply();
             sprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
-            sprite.name = "SSoV_Icon_" + stone.Id;
-            icons[stone.Id] = sprite;
+            sprite.name = "SSoV_Icon_" + key;
+            icons[key] = sprite;
             return sprite;
+        }
+
+        static Sprite dot;
+
+        // Heimdall's map mark for an enemy coming for you: a red dot with a dark rim.
+        internal static Sprite Dot()
+        {
+            if (dot != null) return dot;
+            const int size = 32;
+            Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            Color[] pixels = new Color[size * size];
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float d = new Vector2(x + 0.5f - size / 2f, y + 0.5f - size / 2f).magnitude / (size / 2f);
+                    Color c = d < 0.62f ? new Color(0.95f, 0.15f, 0.1f) : new Color(0.1f, 0.02f, 0.02f);
+                    c.a = Mathf.Clamp01((0.95f - d) * 12f);
+                    pixels[y * size + x] = c;
+                }
+            tex.SetPixels(pixels);
+            tex.Apply();
+            dot = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
+            dot.name = "SSoV_Heimdall";
+            return dot;
         }
 
         // The rune alone, glowing on a clear background, to put on the pillar.

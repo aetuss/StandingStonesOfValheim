@@ -37,7 +37,8 @@ foreach ($dir in Get-ChildItem $langRoot -Directory) {
     foreach ($key in $other.Keys) { if (-not $english.ContainsKey($key)) { $problems += "$($dir.Name): $key is not in English" } }
 }
 foreach ($key in $english.Keys) { if ([string]::IsNullOrWhiteSpace($english[$key])) { $problems += "English: empty $key" } }
-$used = @("ssov_kind_path", "ssov_kind_always", "ssov_kind_cost", "ssov_kind_daily")
+$used = @("ssov_kind_path", "ssov_kind_always", "ssov_kind_cost", "ssov_kind_daily", "ssov_far_0", "ssov_far_1", "ssov_far_2", "ssov_altar_desc",
+    "ssov_read", "ssov_choose", "ssov_is_chosen", "ssov_altar_open") + (@("n", "ne", "e", "se", "s", "sw", "w", "nw") | ForEach-Object { "ssov_dir_" + $_ })
 foreach ($file in Get-ChildItem (Join-Path $root "src") -Filter *.cs) {
     $code = [IO.File]::ReadAllText($file.FullName)
     $used += [regex]::Matches($code, '"\$?(ssov_[a-z0-9_]+)"') | ForEach-Object { $_.Groups[1].Value } | Where-Object { $_ -notin @("ssov_info", "ssov_goto", "ssov_reset", "ssov_findall") -and -not $_.EndsWith("_") }
@@ -46,7 +47,8 @@ foreach ($file in Get-ChildItem (Join-Path $root "src") -Filter *.cs) {
         $id = "ssov_" + $m.Groups[1].Value.ToLowerInvariant()
         $used += @($id, ($id + "_lore"), ($id + "_effect"))
     }
-}foreach ($key in ($used | Sort-Object -Unique)) { if (-not $english.ContainsKey($key)) { $problems += "English: the code uses $key, which isn't translated" } }
+}
+foreach ($key in ($used | Sort-Object -Unique)) { if (-not $english.ContainsKey($key)) { $problems += "English: the code uses $key, which isn't translated" } }
 if ($problems.Count -gt 0) { $problems | ForEach-Object { Write-Output $_ }; throw "Translation check failed" }
 Write-Output "Translations OK: $($english.Count) keys"
 
@@ -61,7 +63,9 @@ $refs = @(
     "$Managed\UnityEngine.dll", "$Managed\UnityEngine.CoreModule.dll", "$Managed\assembly_valheim.dll", "$Managed\assembly_utils.dll",
     "$BepInExCore\BepInEx.dll", "$BepInExCore\0Harmony.dll", $Jotunn,
     "$Managed\UnityEngine.PhysicsModule.dll", "$Managed\UnityEngine.ParticleSystemModule.dll", "$Managed\SoftReferenceableAssets.dll",
-    "$Managed\assembly_guiutils.dll", "$Managed\UnityEngine.UI.dll", "$Managed\UnityEngine.AnimationModule.dll", "$Managed\UnityEngine.AudioModule.dll"
+    "$Managed\assembly_guiutils.dll", "$Managed\UnityEngine.UI.dll", "$Managed\UnityEngine.AnimationModule.dll", "$Managed\UnityEngine.AudioModule.dll",
+    "$Managed\UnityEngine.TextRenderingModule.dll", "$Managed\UnityEngine.UIModule.dll", "$Managed\UnityEngine.InputLegacyModule.dll",
+    "$Managed\UnityEngine.AssetBundleModule.dll", "$Managed\Splatform.dll"
 ) | ForEach-Object { "/r:$_" }
 
 # The translations go into the dll too (Texts.LoadOwn), so the texts are there however the mod is installed.

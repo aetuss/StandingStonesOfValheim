@@ -8,7 +8,7 @@ namespace StandingStonesOfValheim
 {
     // The chosen stone works as a status effect on the player: it shows as an icon by the others on the HUD,
     // with its effect as the tooltip, and most effects are the game's own status effect hooks. The rest are
-    // patches below that ask whether the local player's stone is a given one.
+    // patches (Powers) that ask whether the local player's stone is a given one.
     class SE_Stone : SE_Stats
     {
         internal string StoneId;
@@ -18,7 +18,9 @@ namespace StandingStonesOfValheim
         public override string GetTooltipString()
         {
             Stone stone = Stone;
-            return stone != null ? stone.EffectText() : base.GetTooltipString();
+            if (stone == null) return base.GetTooltipString();
+            string daily = stone.DailyText(m_character as Player);
+            return stone.EffectText() + (daily.Length > 0 ? "\n" + daily : "");
         }
 
         // Path stones: their skills rise faster (added like the game's own skill bonuses).
@@ -47,6 +49,51 @@ namespace StandingStonesOfValheim
             base.ModifySpeed(baseSpeed, ref speed, character, dir);
             if (StoneId == "Frigg" && character != null && character.IsRunning()) speed -= baseSpeed * Stone.P(1);
         }
+
+        public override void ModifyAttack(Skills.SkillType skill, ref HitData hitData)
+        {
+            base.ModifyAttack(skill, ref hitData);
+            Stone stone = Stone;
+            if (stone == null || hitData == null) return;
+            switch (StoneId)
+            {
+                case "Hel": // stronger while near death
+                    if (m_character != null && m_character.GetHealthPercentage() < stone.P(1)) hitData.m_damage.Modify(1f + stone.P(0));
+                    break;
+                case "Vidarr":
+                    if (Powers.IsMelee(skill)) hitData.m_damage.Modify(1f + stone.P(0));
+                    break;
+                case "Loki": // the weapon's sneak attack bonus, set just before this, goes up
+                    if (hitData.m_backstabBonus > 1f) hitData.m_backstabBonus *= 1f + stone.P(0);
+                    break;
+            }
+        }
+
+        // Loki: quieter while sneaking.
+        public override void ModifyNoise(float baseNoise, ref float noise)
+        {
+            base.ModifyNoise(baseNoise, ref noise);
+            if (StoneId == "Loki" && m_character != null && m_character.IsCrouching()) noise -= baseNoise * Stone.P(1);
+        }
+
+        // Njord: swimming costs less stamina.
+        public override void ModifySwimStaminaUsage(float baseStaminaUse, ref float staminaUse)
+        {
+            base.ModifySwimStaminaUsage(baseStaminaUse, ref staminaUse);
+            if (StoneId == "Njord") staminaUse -= baseStaminaUse * Stone.P(1);
+        }
+
+        static readonly List<HitData.DamageModPair> frostResistant = new List<HitData.DamageModPair>
+        {
+            new HitData.DamageModPair { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Resistant }
+        };
+
+        // Skadi: resistant to frost, like a frost resistance mead (so the cold can chill but not freeze).
+        public override void ModifyDamageMods(ref HitData.DamageModifiers modifiers)
+        {
+            base.ModifyDamageMods(ref modifiers);
+            if (StoneId == "Skadi" && Stone.V(1) >= 0.5f) modifiers.Apply(frostResistant);
+        }
     }
 
     static class StoneEffects
@@ -68,6 +115,7 @@ namespace StandingStonesOfValheim
                 ItemManager.Instance.AddStatusEffect(new CustomStatusEffect(se, false));
                 hashes[stone.Id] = stone.EffectName.GetStableHashCode();
             }
+            Powers.RegisterEffects();
             Plugin.Debug("Registered " + hashes.Count + " stone effects");
         }
 
@@ -81,18 +129,20 @@ namespace StandingStonesOfValheim
             {
                 int hash;
                 if (!hashes.TryGetValue(stone.Id, out hash)) continue;
-                bool wanted = stone == active && stone.Ready;
+                bool wanted = stone == active;
                 bool has = seman.HaveStatusEffect(hash);
                 if (has && !wanted) seman.RemoveStatusEffect(hash, true);
                 else if (!has && wanted) seman.AddStatusEffect(hash, false, 0, 0f, 0);
             }
+            Powers.OnStoneChanged(player);
         }
 
         // The local player's chosen stone, if it is this one.
         internal static bool LocalHas(string id)
         {
             Player player = Player.m_localPlayer;
-            return player != null && StoneData.IsActive(player, id) && player.GetSEMan().HaveStatusEffect(id == null ? 0 : HashOf(id));
+            int hash;
+            return player != null && StoneData.IsActive(player, id) && hashes.TryGetValue(id, out hash) && player.GetSEMan().HaveStatusEffect(hash);
         }
 
         internal static bool Has(Character character, string id)
@@ -101,20 +151,16 @@ namespace StandingStonesOfValheim
             return player != null && player == Player.m_localPlayer && LocalHas(id);
         }
 
-        static int HashOf(string id)
-        {
-            int hash;
-            return hashes.TryGetValue(id, out hash) ? hash : 0;
-        }
-
         // Status effects aren't kept over a logout or a death: the stone's goes on again whenever the
-        // player appears.
+        // player appears, and so does Hel's mark if it's still on them.
         [HarmonyPatch(typeof(Player), "OnSpawned")]
         static class SpawnPatch
         {
             static void Postfix(Player __instance)
             {
-                if (__instance == Player.m_localPlayer) Apply(__instance);
+                if (__instance != Player.m_localPlayer) return;
+                Apply(__instance);
+                HelMark.Refresh(__instance, true);
             }
         }
 

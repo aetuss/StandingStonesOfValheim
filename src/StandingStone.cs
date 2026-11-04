@@ -23,8 +23,7 @@ namespace StandingStonesOfValheim
             Player player = Player.m_localPlayer;
             if (stone == null || player == null) return "";
             string text = stone.NameToken + "\n[<color=yellow><b>$KEY_Use</b></color>] $ssov_read";
-            if (!stone.Ready) text += "\n$ssov_not_ready";
-            else if (StoneData.IsActive(player, stone.Id)) text += "\n<color=#9fd49f>$ssov_is_chosen</color>";
+            if (StoneData.IsActive(player, stone.Id)) text += "\n<color=#9fd49f>$ssov_is_chosen</color>";
             else text += "\n[<color=yellow><b>" + (ZInput.IsGamepadActive() ? "$KEY_AltKeys + $KEY_Use" : "$KEY_AltPlace + $KEY_Use") + "</b></color>] $ssov_choose";
             return Localization.instance.Localize(text);
         }
@@ -39,6 +38,8 @@ namespace StandingStonesOfValheim
             if (alt) Choose(player, stone);
             else Read(stone);
             if (first) StoneEvents.FoundFirstTime(player, stone, transform.position);
+            // Each reading (and the first touch) asks the server where the next unfound stone lies.
+            if (first || !alt) Hints.Ask(stone, transform.position);
             return true;
         }
 
@@ -58,17 +59,11 @@ namespace StandingStonesOfValheim
             string kind = Texts.Get("ssov_kind_" + stone.Kind.ToString().ToLowerInvariant());
             string color = ColorUtility.ToHtmlStringRGB(Color.Lerp(stone.Glow, Color.white, 0.25f));
             string text = Texts.Get(stone.Key + "_lore") + "\n\n<color=#" + color + ">" + kind + "</color>\n" + stone.EffectText();
-            if (!stone.Ready) text += "\n\n" + Texts.Get("ssov_not_ready");
             TextViewer.instance.ShowText(TextViewer.Style.Rune, Localization.instance.Localize(stone.NameToken), text, true);
         }
 
         internal static void Choose(Player player, Stone stone)
         {
-            if (!stone.Ready)
-            {
-                player.Message(MessageHud.MessageType.Center, "$ssov_not_ready", 0, null);
-                return;
-            }
             if (StoneData.IsActive(player, stone.Id))
             {
                 player.Message(MessageHud.MessageType.Center, Texts.Get("ssov_already_chosen", stone.NameToken), 0, null);
@@ -84,6 +79,7 @@ namespace StandingStonesOfValheim
     static class StoneEvents
     {
         static readonly string[] ChooseEffects = { "fx_GP_Activation", "sfx_runestone_activate" };
+        static readonly System.Reflection.MethodInfo updateKnown = HarmonyLib.AccessTools.Method(typeof(Player), "UpdateKnownRecipesList");
 
         internal static void PlayChooseEffect(Player player)
         {
@@ -100,6 +96,8 @@ namespace StandingStonesOfValheim
         internal static void FoundFirstTime(Player player, Stone stone, Vector3 at)
         {
             player.Message(MessageHud.MessageType.TopLeft, Texts.Get("ssov_found", stone.NameToken), 0, Runes.Icon(stone));
+            // The rune altar can be built from now on: let the hammer know at once.
+            if (updateKnown != null) updateKnown.Invoke(player, null);
             Plugin.Debug(player.GetPlayerName() + " found " + stone.Id + " at " + at.ToString("F0"));
         }
     }

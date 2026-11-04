@@ -3,6 +3,7 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using Jotunn.Managers;
 using Jotunn.Utils;
+using UnityEngine;
 
 // Thunderstore asks mods made with AI to say so here and in the README.
 [assembly: System.Reflection.AssemblyMetadata("AI_Assisted_Creation", "This assembly was fully created with the assistance of Generative AI: the code was written by Claude (Anthropic) through Claude Code.")]
@@ -17,10 +18,11 @@ namespace StandingStonesOfValheim
     {
         public const string Guid = "StandingStonesOfValheim";
         public const string ModName = "StandingStonesOfValheim";
-        public const string Version = "0.1.0";
+        public const string Version = "0.2.0";
 
         internal static ConfigEntry<int> CopiesPerStone;
         internal static ConfigEntry<float> StoneSpacing;
+        internal static ConfigEntry<KeyboardShortcut> DailyKey;
         internal static ConfigEntry<bool> DebugLog;
 
         internal static BepInEx.Logging.ManualLogSource Log;
@@ -37,6 +39,8 @@ namespace StandingStonesOfValheim
             StoneSpacing = Config.Bind("1 - World generation", "StoneSpacing", 400f,
                 new ConfigDescription("The least distance in metres between any two standing stones.",
                     new AcceptableValueRange<float>(100f, 3000f), Admin()));
+            DailyKey = Config.Bind("2 - Keys", "DailyPowerKey", new KeyboardShortcut(KeyCode.H),
+                "The key that calls your stone's daily power (Freyja's blessing). Ignored while Alt is held, so Alt+H stays free for other mods.");
             DebugLog = Config.Bind("9 - Debug", "DebugLog", true, // false for 1.0.0
                 "Writes how the stones were built and where they are to the BepInEx log. Useful when reporting a problem.");
             Stone.BindConfig(Config);
@@ -59,6 +63,7 @@ namespace StandingStonesOfValheim
         {
             PrefabManager.OnVanillaPrefabsAvailable -= OnVanillaPrefabs;
             StoneEffects.Register();
+            RuneAltar.Register();
         }
 
         void OnVanillaLocations()

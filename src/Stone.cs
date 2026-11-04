@@ -48,7 +48,6 @@ namespace StandingStonesOfValheim
         internal readonly Skills.SkillType[] Skills;
         internal readonly StoneValue[] Values;
         internal readonly Offering[] Offerings;
-        internal readonly bool Ready;           // its effect is built (the stones come in phases while testing)
 
         internal string Key { get { return "ssov_" + Id.ToLowerInvariant(); } }
         internal string NameToken { get { return "$" + Key; } }
@@ -56,7 +55,7 @@ namespace StandingStonesOfValheim
         internal string EffectName { get { return "SSoV_SE_" + Id; } }
         internal Color Glow { get { return KindColor(Kind); } }
 
-        Stone(string id, StoneKind kind, Heightmap.Biome biome, string land, Rune rune, bool ready,
+        Stone(string id, StoneKind kind, Heightmap.Biome biome, string land, Rune rune,
             Skills.SkillType[] skills, StoneValue[] values, Offering[] offerings)
         {
             Id = id;
@@ -65,7 +64,6 @@ namespace StandingStonesOfValheim
             Land = land;
             Coast = land == "ssov_land_coast";
             Rune = rune;
-            Ready = ready;
             Skills = skills ?? new Skills.SkillType[0];
             Values = values ?? new StoneValue[0];
             Offerings = offerings;
@@ -99,7 +97,16 @@ namespace StandingStonesOfValheim
         {
             string[] args = new string[Values.Length];
             for (int i = 0; i < Values.Length; i++) args[i] = Mathf.RoundToInt(V(i)).ToString();
-            return Texts.Get(Key + "_effect", args);
+            string text = Texts.Get(Key + "_effect", args);
+            if (Id == Powers.Freyja) text += "\n" + Texts.Get("ssov_daily_key", DailyPower.KeyText());
+            return text;
+        }
+
+        // For a daily stone: whether its power is ready today, for the tooltip.
+        internal string DailyText(Player player)
+        {
+            if (Kind != StoneKind.Daily || player == null) return "";
+            return Texts.Get(Powers.UsedToday(player, Id) ? "ssov_daily_used" : "ssov_daily_ready");
         }
 
         internal static Stone Find(string id)
@@ -140,66 +147,66 @@ namespace StandingStonesOfValheim
         internal static readonly Stone[] All =
         {
             // Meadows
-            new Stone("Tyr", StoneKind.Path, Heightmap.Biome.Meadows, "ssov_land_meadows", Rune.Tiwaz, true,
+            new Stone("Tyr", StoneKind.Path, Heightmap.Biome.Meadows, "ssov_land_meadows", Rune.Tiwaz,
                 new[] { global::Skills.SkillType.Swords, global::Skills.SkillType.Knives, global::Skills.SkillType.Clubs, global::Skills.SkillType.Polearms,
                         global::Skills.SkillType.Spears, global::Skills.SkillType.Axes, global::Skills.SkillType.Unarmed, global::Skills.SkillType.Blocking },
                 new[] { Gain() }, Gift("Flint", 10, "DeerHide", 5)),
-            new Stone("Bragi", StoneKind.Always, Heightmap.Biome.Meadows, "ssov_land_meadows", Rune.Mannaz, true, null,
+            new Stone("Bragi", StoneKind.Always, Heightmap.Biome.Meadows, "ssov_land_meadows", Rune.Mannaz, null,
                 new[] { new StoneValue("RestedLonger", 50f, 300f, "How much longer Rested lasts, in percent.") }, Gift("Flint", 10, "DeerHide", 5)),
-            new Stone("Frigg", StoneKind.Cost, Heightmap.Biome.Meadows, "ssov_land_meadows", Rune.Othala, true, null,
+            new Stone("Frigg", StoneKind.Cost, Heightmap.Biome.Meadows, "ssov_land_meadows", Rune.Othala, null,
                 new[] { new StoneValue("FoodLonger", 50f, 300f, "How much longer food lasts, in percent."),
                         new StoneValue("RunSlower", 10f, 90f, "The cost: how much slower you run, in percent.") }, Gift("Flint", 10, "DeerHide", 5)),
             // Black Forest
-            new Stone("Freyr", StoneKind.Path, Heightmap.Biome.BlackForest, "ssov_land_blackforest", Rune.Ingwaz, true,
+            new Stone("Freyr", StoneKind.Path, Heightmap.Biome.BlackForest, "ssov_land_blackforest", Rune.Ingwaz,
                 new[] { global::Skills.SkillType.WoodCutting, global::Skills.SkillType.Pickaxes, global::Skills.SkillType.Fishing, global::Skills.SkillType.Farming },
                 new[] { Gain() }, Gift("Copper", 10, "TrollHide", 2)),
-            new Stone("Ullr", StoneKind.Path, Heightmap.Biome.BlackForest, "ssov_land_blackforest", Rune.Eihwaz, true,
+            new Stone("Ullr", StoneKind.Path, Heightmap.Biome.BlackForest, "ssov_land_blackforest", Rune.Eihwaz,
                 new[] { global::Skills.SkillType.Bows, global::Skills.SkillType.Crossbows, global::Skills.SkillType.Sneak },
                 new[] { Gain() }, Gift("Copper", 10, "TrollHide", 2)),
             // Swamp
-            new Stone("Hel", StoneKind.Cost, Heightmap.Biome.Swamp, "ssov_land_swamp", Rune.Hagalaz, false, null,
+            new Stone("Hel", StoneKind.Cost, Heightmap.Biome.Swamp, "ssov_land_swamp", Rune.Hagalaz, null,
                 new[] { new StoneValue("LowHealthDamage", 40f, 300f, "How much more damage you deal while your health is low, in percent."),
                         new StoneValue("LowHealthBelow", 30f, 90f, "Below how much of your health (in percent) the extra damage starts."),
                         new StoneValue("MarkWeakness", 25f, 90f, "The cost: Hel's mark after you die with her stone takes this much (in percent) from your max health and stamina, until you take your things back from your grave or a day goes by.") },
                 Gift("Iron", 10, "Guck", 5)),
-            new Stone("Eir", StoneKind.Always, Heightmap.Biome.Swamp, "ssov_land_swamp", Rune.Berkano, true, null,
+            new Stone("Eir", StoneKind.Always, Heightmap.Biome.Swamp, "ssov_land_swamp", Rune.Berkano, null,
                 new[] { new StoneValue("HealthRegen", 50f, 300f, "How much faster your health comes back, in percent.") }, Gift("Iron", 10, "Guck", 5)),
             // Mountain
-            new Stone("Skadi", StoneKind.Always, Heightmap.Biome.Mountain, "ssov_land_mountain", Rune.Isa, false, null,
+            new Stone("Skadi", StoneKind.Always, Heightmap.Biome.Mountain, "ssov_land_mountain", Rune.Isa, null,
                 new[] { new StoneValue("ColdLess", 50f, 100f, "How much of the cold's and freezing's penalties it takes away, in percent."),
                         new StoneValue("FrostResistant", 1f, 1f, "1: you are resistant to frost damage (and the cold can't freeze you, only chill you, as with a frost resistance mead). 0: no.") },
                 Gift("Silver", 10, "WolfPelt", 3)),
-            new Stone("Heimdall", StoneKind.Always, Heightmap.Biome.Mountain, "ssov_land_mountain", Rune.Algiz, false, null,
+            new Stone("Heimdall", StoneKind.Always, Heightmap.Biome.Mountain, "ssov_land_mountain", Rune.Algiz, null,
                 new[] { new StoneValue("Range", 40f, 150f, "How far away (metres) an enemy coming for you shows on the minimap.") }, Gift("Silver", 10, "WolfPelt", 3)),
             // Plains
-            new Stone("Thor", StoneKind.Always, Heightmap.Biome.Plains, "ssov_land_plains", Rune.Thurisaz, true, null,
+            new Stone("Thor", StoneKind.Always, Heightmap.Biome.Plains, "ssov_land_plains", Rune.Thurisaz, null,
                 new[] { new StoneValue("CarryWeight", 100f, 1000f, "How much more you can carry.") }, Gift("BlackMetal", 10, "LoxPelt", 2)),
-            new Stone("Baldr", StoneKind.Daily, Heightmap.Biome.Plains, "ssov_land_plains", Rune.Sowilo, false, null,
+            new Stone("Baldr", StoneKind.Daily, Heightmap.Biome.Plains, "ssov_land_plains", Rune.Sowilo, null,
                 new[] { new StoneValue("HealthLeft", 20f, 100f, "Once a day, a blow that would kill you leaves you with this much of your health (percent) instead."),
                         new StoneValue("UnharmedSeconds", 3f, 30f, "For how many seconds after that nothing can hurt you.") },
                 Gift("BlackMetal", 10, "LoxPelt", 2)),
             // Mistlands
-            new Stone("Odin", StoneKind.Path, Heightmap.Biome.Mistlands, "ssov_land_mistlands", Rune.Ansuz, true,
+            new Stone("Odin", StoneKind.Path, Heightmap.Biome.Mistlands, "ssov_land_mistlands", Rune.Ansuz,
                 new[] { global::Skills.SkillType.ElementalMagic, global::Skills.SkillType.BloodMagic },
                 new[] { Gain() }, Gift("Eitr", 5, "BlackCore", 1)),
-            new Stone("Freyja", StoneKind.Daily, Heightmap.Biome.Mistlands, "ssov_land_mistlands", Rune.Fehu, false, null,
+            new Stone("Freyja", StoneKind.Daily, Heightmap.Biome.Mistlands, "ssov_land_mistlands", Rune.Fehu, null,
                 new[] { new StoneValue("Damage", 15f, 300f, "How much more damage you deal while her blessing lasts, in percent."),
                         new StoneValue("KillHeal", 10f, 100f, "How much of your max health (percent) each kill gives back while it lasts."),
                         new StoneValue("Seconds", 60f, 600f, "How long her blessing lasts.") },
                 Gift("Eitr", 5, "BlackCore", 1)),
             // Ashlands
-            new Stone("Loki", StoneKind.Cost, Heightmap.Biome.AshLands, "ssov_land_ashlands", Rune.Kenaz, false, null,
+            new Stone("Loki", StoneKind.Cost, Heightmap.Biome.AshLands, "ssov_land_ashlands", Rune.Kenaz, null,
                 new[] { new StoneValue("SneakAttack", 50f, 300f, "How much harder your sneak attacks hit, in percent."),
                         new StoneValue("Quieter", 50f, 100f, "How much quieter you are while sneaking, in percent."),
                         new StoneValue("LessHealth", 20f, 90f, "The cost: how much less max health you have, in percent.") },
                 Gift("FlametalNew", 10, null, 0)), // the Ashlands' flametal ("Flametal" is the old Ancient Metal)
             // Deep North
-            new Stone("Vidarr", StoneKind.Cost, Heightmap.Biome.DeepNorth, "ssov_land_deepnorth", Rune.Uruz, false, null,
+            new Stone("Vidarr", StoneKind.Cost, Heightmap.Biome.DeepNorth, "ssov_land_deepnorth", Rune.Uruz, null,
                 new[] { new StoneValue("MeleeDamage", 20f, 300f, "How much more damage your melee attacks deal, in percent."),
                         new StoneValue("WeakerBlock", 50f, 90f, "The cost: how much weaker your blocks are, in percent.") },
                 Gift("FrostCore", 3, "Frostwood", 10)), // Frostcore, Timberwood
             // Any shore
-            new Stone("Njord", StoneKind.Always, Shore, "ssov_land_coast", Rune.Laguz, false, null,
+            new Stone("Njord", StoneKind.Always, Shore, "ssov_land_coast", Rune.Laguz, null,
                 new[] { new StoneValue("ShipSpeed", 10f, 100f, "How much faster a ship you steer sails, in percent."),
                         new StoneValue("SwimStamina", 50f, 100f, "How much less stamina swimming costs, in percent.") },
                 Gift("SerpentScale", 5, null, 0)),
@@ -207,8 +214,7 @@ namespace StandingStonesOfValheim
 
         internal static IEnumerable<Stone> Placed()
         {
-            foreach (Stone stone in All)
-                if (stone.Ready) yield return stone;
+            return All;
         }
     }
 }
