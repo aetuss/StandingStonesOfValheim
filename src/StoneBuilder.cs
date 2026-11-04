@@ -85,7 +85,7 @@ namespace StandingStonesOfValheim
         }
 
         // The vegvisir's glow (its emissive runes, lights and particles) in the colour of the stone's kind.
-        static void Tint(GameObject go, Color glow)
+        internal static void Tint(GameObject go, Color glow)
         {
             foreach (Renderer renderer in go.GetComponentsInChildren<Renderer>(true))
             {
@@ -257,9 +257,8 @@ namespace StandingStonesOfValheim
                     Standing("AmberPearl", 0.9f, 1f, 1, 0f, 0.3f);
                     break;
                 case "Loki":
-                    Standing("fire_pit", 0f, 1.5f, -1, 0f, 1.4f);
-                    Lying("KnifeSkollAndHati", 1.2f, 1.1f, -1, 50f, 1.2f);
-                    Lying("ShieldFlametal", -1.2f, 1.1f, -1, 200f, 1.1f);
+                    Leaning("ShieldFlametal", -0.9f, -1, 0f, 1.1f);
+                    Leaning("KnifeSkollAndHati", 0.8f, -1, 90f, 1.1f);
                     Lying("KnifeBlackMetal", 0.3f, 1.1f, 1, 130f, 1.1f);
                     break;
                 case "Vidarr":
@@ -310,6 +309,20 @@ namespace StandingStonesOfValheim
             Shrink(go, maxSize);
             Bounds b = LocalBounds(go);
             Move(go, b, new Vector3(x, -0.02f * b.size.y, side * (faceDepth + d)));
+        }
+
+        // Something leant against the pillar's face (side -1 front, 1 back), upright and tipped a little
+        // towards the stone; turn spins it about its own height first.
+        static void Leaning(string name, float x, int side, float turn, float maxSize)
+        {
+            GameObject go = Copy(new[] { name });
+            if (go == null) return;
+            const float tilt = 14f;
+            go.transform.localRotation = Quaternion.Euler(-side * tilt, 0f, 0f) * Quaternion.Euler(0f, turn, 0f);
+            Shrink(go, maxSize);
+            Bounds b = LocalBounds(go);
+            // Its top against the face; the face is a little nearer than the pillar's widest point up there.
+            Move(go, b, new Vector3(x, -0.03f, side * (faceDepth * 0.85f + b.size.z * 0.5f)));
         }
 
         static void Shrink(GameObject go, float maxSize)

@@ -4,17 +4,21 @@ using TMPro;
 
 namespace StandingStonesOfValheim
 {
-    // With DebugLog on: when the compendium shows a text while a stone is chosen, writes how its text box
-    // laid the text out (testers saw the stone's tooltip cut off there).
+    // The compendium's text box (testers saw the stone's tooltip cut off there). With DebugLog on, while a
+    // stone is chosen, also writes how the box laid the text out.
     [HarmonyPatch(typeof(TextsDialog), "ShowText", new[] { typeof(TextsDialog.TextInfo) })]
     static class CompendiumDebug
     {
         static void Postfix(TextsDialog __instance)
         {
-            if (!Plugin.DebugLog.Value || Player.m_localPlayer == null || StoneData.Active(Player.m_localPlayer) == null) return;
             TMP_Text area = __instance.m_textArea;
             if (area == null) return;
+            // The game's text box cuts off what doesn't fit (overflow Truncate), and its height catches up
+            // with a new text only a moment later; the game's own texts end with empty lines, so only those
+            // are lost, but ours lost its last words. Let the text run on and the box grow to it.
+            area.overflowMode = TextOverflowModes.Overflow;
             area.ForceMeshUpdate();
+            if (!Plugin.DebugLog.Value || Player.m_localPlayer == null || StoneData.Active(Player.m_localPlayer) == null) return;
             string text = area.text ?? "";
             int shown = area.textInfo != null ? area.textInfo.characterCount : -1;
             string missing = "";

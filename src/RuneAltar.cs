@@ -16,32 +16,49 @@ namespace StandingStonesOfValheim
         internal const string PrefabName = "SSoV_RuneAltar";
         internal const string Token = "$ssov_altar";
 
+        static readonly string[] Bases = { "Vegvisir_Eikthyr", "Vegvisir_GDKing", "RuneStone_Meadows" };
+        const float Height = 1.7f;
+
+        // The altar is a small copy of the stone pillars' own vegvisir, its runes glowing pale blue: the
+        // game's prefab cloned whole (what renders as a stone renders as the altar too), its own vegvisir
+        // script taken off, made a building piece.
         internal static void Register()
         {
-            GameObject go = PrefabManager.Instance.CreateEmptyPrefab(PrefabName, true);
-            Object.DestroyImmediate(go.GetComponent<MeshRenderer>());
-            Object.DestroyImmediate(go.GetComponent<MeshFilter>());
-            Object.DestroyImmediate(go.GetComponent<Collider>());
-            go.GetComponent<ZNetView>().m_persistent = true;
-            go.layer = LayerMask.NameToLayer("piece");
-
-            GameObject visual = new GameObject("visual");
-            visual.transform.SetParent(go.transform, false);
-            if (!BuildVisual(visual))
+            GameObject go = null;
+            string from = "";
+            foreach (string name in Bases)
+                if (PrefabManager.Instance.GetPrefab(name) != null) { go = PrefabManager.Instance.CreateClonedPrefab(PrefabName, name); from = name; break; }
+            if (go == null)
             {
-                Plugin.Log.LogWarning("Could not build the rune altar's look; the altar is left out.");
+                Plugin.Log.LogWarning("No vegvisir or runestone to make the rune altar from; the altar is left out.");
                 return;
             }
-            foreach (Transform t in go.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = LayerMask.NameToLayer("piece");
+            for (int pass = 0; pass < 4; pass++)
+            {
+                bool removed = false;
+                foreach (MonoBehaviour script in go.GetComponentsInChildren<MonoBehaviour>(true))
+                    if (!(script is ZNetView)) { Object.DestroyImmediate(script); removed = true; }
+                if (!removed) break;
+            }
+            foreach (Rigidbody body in go.GetComponentsInChildren<Rigidbody>(true)) Object.DestroyImmediate(body);
+            ZNetView view = go.GetComponent<ZNetView>();
+            if (view == null) view = go.AddComponent<ZNetView>();
+            view.m_persistent = true;
+
+            Bounds b = Bounds(go, go.transform);
+            if (b.size.y > 0.01f) go.transform.localScale = Vector3.one * (Height / b.size.y);
+            int piece_layer = LayerMask.NameToLayer("piece");
+            foreach (Collider collider in go.GetComponentsInChildren<Collider>(true)) collider.gameObject.layer = piece_layer;
+            go.layer = piece_layer;
+            StoneBuilder.Tint(go, new Color(0.65f, 0.8f, 1f));
+            Plugin.Debug("Rune altar from " + from + ": size " + (b.size * (Height / Mathf.Max(b.size.y, 0.01f))).ToString("F2") +
+                ", renderers " + go.GetComponentsInChildren<Renderer>(true).Length);
 
             Piece piece = go.AddComponent<Piece>();
             piece.m_name = Token;
             piece.m_description = Token + "_desc";
             piece.m_icon = Runes.Icon(Rune.Ansuz, new Color(0.75f, 0.85f, 1f), "Altar");
             WearNTear wear = go.AddComponent<WearNTear>();
-            wear.m_new = visual;
-            wear.m_worn = visual;
-            wear.m_broken = visual;
             wear.m_materialType = WearNTear.MaterialType.Stone;
             wear.m_health = 1500f;
             wear.m_noRoofWear = true;
@@ -60,62 +77,12 @@ namespace StandingStonesOfValheim
             Plugin.Debug("Registered the rune altar");
         }
 
-        // A low flat stone with a small runestone on it.
-        static bool BuildVisual(GameObject visual)
-        {
-            GameObject slab = Copy("Rock_3", visual.transform);
-            GameObject stone = Copy("RuneStone_Meadows", visual.transform);
-            if (slab == null || stone == null) return false;
-            Fit(slab, visual.transform, new Vector3(1.5f, 0.45f, 1.1f));
-            Bounds b = Bounds(slab, visual.transform);
-            Place(slab, b, new Vector3(0f, -0.1f, 0f));
-            Bounds sb = Bounds(stone, visual.transform);
-            if (sb.size.y > 0.01f) stone.transform.localScale = Vector3.one * (1.3f / sb.size.y);
-            sb = Bounds(stone, visual.transform);
-            Place(stone, sb, new Vector3(0f, 0.3f, 0.1f));
-            Plugin.Debug("Rune altar: slab " + Bounds(slab, visual.transform).size.ToString("F2") + ", stone " + Bounds(stone, visual.transform).size.ToString("F2") +
-                ", renderers " + visual.GetComponentsInChildren<Renderer>(true).Length);
-            return true;
-        }
-
-        static GameObject Copy(string name, Transform parent)
-        {
-            GameObject prefab = PrefabManager.Instance.GetPrefab(name);
-            if (prefab == null) return null;
-            GameObject go = Object.Instantiate(prefab, parent, false);
-            go.name = name;
-            go.transform.localPosition = Vector3.zero;
-            go.transform.localRotation = Quaternion.identity;
-            for (int pass = 0; pass < 4; pass++)
-            {
-                MonoBehaviour[] scripts = go.GetComponentsInChildren<MonoBehaviour>(true);
-                if (scripts.Length == 0) break;
-                for (int i = scripts.Length - 1; i >= 0; i--) Object.DestroyImmediate(scripts[i]);
-            }
-            foreach (Rigidbody body in go.GetComponentsInChildren<Rigidbody>(true)) Object.DestroyImmediate(body);
-            // Switched-off parts (a rock's broken pieces, other looks) would only throw the size off.
-            foreach (Transform child in go.GetComponentsInChildren<Transform>(true))
-                if (child != null && child != go.transform && !child.gameObject.activeSelf) Object.DestroyImmediate(child.gameObject);
-            return go;
-        }
-
-        static void Fit(GameObject go, Transform space, Vector3 size)
-        {
-            Bounds b = Bounds(go, space);
-            go.transform.localScale = new Vector3(size.x / Mathf.Max(b.size.x, 0.01f), size.y / Mathf.Max(b.size.y, 0.01f), size.z / Mathf.Max(b.size.z, 0.01f));
-        }
-
-        static void Place(GameObject go, Bounds b, Vector3 bottom)
-        {
-            Vector3 p = go.transform.localPosition;
-            go.transform.localPosition = new Vector3(p.x + bottom.x - b.center.x, p.y + bottom.y - b.min.y, p.z + bottom.z - b.center.z);
-        }
-
+        // Bounds of the visible meshes in space's coordinates (switched-off parts left out).
         static Bounds Bounds(GameObject go, Transform space)
         {
             bool any = false;
             Bounds result = new Bounds();
-            foreach (MeshFilter filter in go.GetComponentsInChildren<MeshFilter>(true))
+            foreach (MeshFilter filter in go.GetComponentsInChildren<MeshFilter>(false))
             {
                 if (filter.sharedMesh == null) continue;
                 Bounds mb = filter.sharedMesh.bounds;
@@ -129,7 +96,6 @@ namespace StandingStonesOfValheim
             }
             return result;
         }
-
         // The sounds and dust of a vanilla stone piece when it is built, hit and broken.
         static void CopyEffects(Piece piece, WearNTear wear)
         {
@@ -145,13 +111,14 @@ namespace StandingStonesOfValheim
             }
         }
 
-        // The altar can be built (and shows in the hammer) only once the character has touched a stone.
+        // The altar shows in the hammer once the character has touched a stone. (Once it's there, the game
+        // remembers it; it can then always be built.)
         [HarmonyPatch(typeof(Player), "HaveRequirements", new[] { typeof(Piece), typeof(Player.RequirementMode) })]
         static class UnlockPatch
         {
-            static void Postfix(Player __instance, Piece piece, ref bool __result)
+            static void Postfix(Player __instance, Piece piece, Player.RequirementMode mode, ref bool __result)
             {
-                if (__result && piece != null && piece.m_name == Token && StoneData.Found(__instance).Count == 0) __result = false;
+                if (__result && mode == Player.RequirementMode.IsKnown && piece != null && piece.m_name == Token && StoneData.Found(__instance).Count == 0) __result = false;
             }
         }
     }
