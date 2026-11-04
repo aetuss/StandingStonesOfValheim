@@ -108,7 +108,10 @@ namespace StandingStonesOfValheim
     [HarmonyPatch(typeof(ZoneSystem), "InsideClearArea")]
     static class StoneClearing
     {
+        // The Ashlands', mountains' and Deep North's big rocks are 20-30 m across; a rock's middle 14 m
+        // away could still cover the stone there.
         const float Radius = 14f;
+        const float BigRockRadius = 26f;
 
         static void Postfix(ZoneSystem __instance, Vector3 point, ref bool __result)
         {
@@ -119,9 +122,11 @@ namespace StandingStonesOfValheim
                 {
                     ZoneSystem.LocationInstance instance;
                     if (!__instance.m_locationInstances.TryGetValue(new Vector2s(zone.x + dx, zone.y + dy), out instance) || instance.m_location == null) continue;
-                    if (Stone.ByLocation(instance.m_location.m_prefabName) == null) continue;
+                    Stone stone = Stone.ByLocation(instance.m_location.m_prefabName);
+                    if (stone == null) continue;
+                    float radius = (stone.Biome & (Heightmap.Biome.AshLands | Heightmap.Biome.Mountain | Heightmap.Biome.DeepNorth)) != 0 ? BigRockRadius : Radius;
                     Vector3 at = instance.m_position;
-                    if (new Vector2(at.x - point.x, at.z - point.z).sqrMagnitude < Radius * Radius) { __result = true; return; }
+                    if (new Vector2(at.x - point.x, at.z - point.z).sqrMagnitude < radius * radius) { __result = true; return; }
                 }
         }
     }

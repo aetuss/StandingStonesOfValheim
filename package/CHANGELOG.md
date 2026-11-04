@@ -1,3 +1,7 @@
+## 0.2.5
+
+- Big rocks keep 26 m clear of Ashlands, Mountain and Deep North stones; flatter ground checked 12 m around; rune altar model centred, layers kept, hitbox added, DebugLog describes it.
+
 ## 0.2.4
 
 - Weapons and shields lean on the stone (grip up, shield face out), other things lie flat on their broadest side; trees and rocks keep 14 m clear of a stone, also from the next zone.

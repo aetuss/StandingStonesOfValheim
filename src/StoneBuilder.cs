@@ -71,7 +71,7 @@ namespace StandingStonesOfValheim
             config.BiomeArea = stone.Coast ? Heightmap.BiomeArea.Everything : Heightmap.BiomeArea.Median;
             config.Quantity = Plugin.CopiesPerStone.Value;
             config.Priotized = true;
-            config.ExteriorRadius = 8f;
+            config.ExteriorRadius = 12f; // also how far around the ground must be fairly flat
             config.ClearArea = true;
             config.RandomRotation = true;
             config.MinTerrainDelta = 0f;
@@ -541,6 +541,18 @@ namespace StandingStonesOfValheim
     {
         Light lamp;
         const float NightIntensity = 0.9f;
+
+        void Start()
+        {
+            if (Plugin.DebugLog.Value) Invoke("Tell", 3f);
+        }
+
+        // For comparing with the rune altar in the log (its vegvisir didn't show; the stones' do).
+        void Tell()
+        {
+            StandingStone stone = transform.parent != null ? transform.parent.GetComponentInChildren<StandingStone>() : null;
+            if (stone != null) Diagnostics.Describe(stone.gameObject, "Standing stone pillar in the world");
+        }
 
         void Awake()
         {

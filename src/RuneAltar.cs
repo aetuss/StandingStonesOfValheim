@@ -47,10 +47,21 @@ namespace StandingStonesOfValheim
 
             Bounds b = Bounds(go, go.transform);
             if (b.size.y > 0.01f) go.transform.localScale = Vector3.one * (Height / b.size.y);
-            int piece_layer = LayerMask.NameToLayer("piece");
-            foreach (Collider collider in go.GetComponentsInChildren<Collider>(true)) collider.gameObject.layer = piece_layer;
-            go.layer = piece_layer;
+            // The model's bottom middle on the piece's own point (the vegvisir's model may sit off its origin).
+            foreach (Transform child in go.transform)
+                child.localPosition -= new Vector3(b.center.x, b.min.y, b.center.z);
+            b = Bounds(go, go.transform);
+            // The game's own layers stay as they are; a box on the piece layer lets the hammer and the
+            // building system find it.
+            GameObject box = new GameObject("SSoV_Hitbox");
+            box.layer = LayerMask.NameToLayer("piece");
+            box.transform.SetParent(go.transform, false);
+            box.transform.localPosition = b.center;
+            box.AddComponent<BoxCollider>().size = b.size;
             StoneBuilder.Tint(go, new Color(0.65f, 0.8f, 1f));
+            Diagnostics.Describe(go, "Rune altar prefab");
+            GameObject wall = PrefabManager.Instance.GetPrefab("stone_wall_1x1");
+            if (wall != null) Diagnostics.Describe(wall, "Vanilla stone_wall_1x1");
             Plugin.Debug("Rune altar from " + from + ": size " + (b.size * (Height / Mathf.Max(b.size.y, 0.01f))).ToString("F2") +
                 ", renderers " + go.GetComponentsInChildren<Renderer>(true).Length);
 
@@ -126,6 +137,17 @@ namespace StandingStonesOfValheim
     // Using the altar opens the list of stones you have found.
     class RuneAltarPiece : MonoBehaviour, Hoverable, Interactable
     {
+        void Start()
+        {
+            if (Plugin.DebugLog.Value) Invoke("Tell", 3f);
+        }
+
+        void Tell()
+        {
+            ZNetView view = GetComponent<ZNetView>();
+            Diagnostics.Describe(gameObject, view != null && view.IsValid() ? "Rune altar in the world" : "Rune altar ghost");
+        }
+
         public string GetHoverName()
         {
             return Localization.instance.Localize(RuneAltar.Token);
