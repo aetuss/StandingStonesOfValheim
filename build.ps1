@@ -52,6 +52,12 @@ foreach ($key in ($used | Sort-Object -Unique)) { if (-not $english.ContainsKey(
 if ($problems.Count -gt 0) { $problems | ForEach-Object { Write-Output $_ }; throw "Translation check failed" }
 Write-Output "Translations OK: $($english.Count) keys"
 
+# Thunderstore refuses a package whose README (or other text file) starts with a UTF-8 BOM.
+foreach ($file in Get-ChildItem (Join-Path $root "package") -Recurse -File -Include *.md, *.json) {
+    $bytes = [IO.File]::ReadAllBytes($file.FullName)
+    if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) { throw "$($file.FullName) starts with a UTF-8 BOM; save it without one" }
+}
+
 # ---- build ----
 $tmp = Join-Path $env:TEMP "vhm\build_ssov"
 New-Item -ItemType Directory -Force $tmp | Out-Null

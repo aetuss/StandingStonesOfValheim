@@ -1,4 +1,4 @@
-﻿# Standing Stones of Valheim
+# Standing Stones of Valheim
 
 Skyrim-style standing stones of the Norse gods, hidden around the world. Find them, choose one, and it guides you: faster skills, blessings, bargains with a cost, or a power once a day.
 
