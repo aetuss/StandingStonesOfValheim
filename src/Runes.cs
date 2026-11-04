@@ -79,7 +79,8 @@ namespace StandingStonesOfValheim
                     // Like the game's own effect icons: the shape alone, bright with a dark rim, no
                     // background; a soft glow of the stone's colour around it.
                     Vector2 uv = new Vector2((x + 0.5f) / size, (y + 0.5f) / size);
-                    Vector2 runeUv = new Vector2((uv.x - 0.5f) / 0.9f + 0.5f, (uv.y - 0.5f) / 0.95f + 0.5f);
+                    // Room above the rune: the HUD writes the effect's name over the icon's top edge.
+                    Vector2 runeUv = new Vector2((uv.x - 0.5f) / 0.78f + 0.5f, (uv.y - 0.44f) / 0.76f + 0.5f);
                     float d = Distance(strokes, runeUv);
                     float core = Mathf.Clamp01((0.075f - d) / 0.018f);
                     float rim = Mathf.Clamp01((0.115f - d) / 0.018f);

@@ -1,3 +1,7 @@
+## 0.2.2
+
+- No stone near lava, props lie on the ground, room above the rune on effect icons, compendium tooltip ends with a line break (and DebugLog writes how the compendium laid it out).
+
 ## 0.2.1
 
 - Test fixes: rune altar visible, runes sit on the pillar's faces, props in front of the faces, new effect icons, short effect names.

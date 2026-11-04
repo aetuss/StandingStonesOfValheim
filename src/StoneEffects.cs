@@ -23,7 +23,8 @@ namespace StandingStonesOfValheim
             // into each other); the tooltip starts with the stone's full name and kind.
             string head = Texts.Get("ssov_tooltip_head", stone.NameToken, "$ssov_kind_" + stone.Kind.ToString().ToLowerInvariant());
             string daily = stone.DailyText(m_character as Player);
-            return head + "\n" + stone.EffectText() + (daily.Length > 0 ? "\n" + daily : "");
+            // Ends with a line break, like the game's own effect tooltips.
+            return head + "\n" + stone.EffectText() + (daily.Length > 0 ? "\n" + daily : "") + "\n";
         }
 
         // Path stones: their skills rise faster (added like the game's own skill bonuses).

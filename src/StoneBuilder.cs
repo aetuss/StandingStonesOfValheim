@@ -257,9 +257,10 @@ namespace StandingStonesOfValheim
                     Standing("AmberPearl", 0.9f, 1f, 1, 0f, 0.3f);
                     break;
                 case "Loki":
-                    Standing("fire_pit", 0f, 1.5f, -1, 0f, 1.3f);
-                    Lying("KnifeSkollAndHati", 1.1f, 1.1f, -1, 50f, 0.9f);
-                    Lying("KnifeBlackMetal", 0.3f, 1.1f, 1, 130f, 0.8f);
+                    Standing("fire_pit", 0f, 1.5f, -1, 0f, 1.4f);
+                    Lying("KnifeSkollAndHati", 1.2f, 1.1f, -1, 50f, 1.2f);
+                    Lying("ShieldFlametal", -1.2f, 1.1f, -1, 200f, 1.1f);
+                    Lying("KnifeBlackMetal", 0.3f, 1.1f, 1, 130f, 1.1f);
                     break;
                 case "Vidarr":
                     Lying("AxeJotunBane", 0.9f, 1f, -1, 40f, 1.4f);
@@ -298,7 +299,7 @@ namespace StandingStonesOfValheim
             go.transform.localRotation = Quaternion.Euler(0f, rotY, 88f);
             Shrink(go, maxSize);
             Bounds b = LocalBounds(go);
-            Move(go, b, new Vector3(x, -0.04f * b.size.y, side * (faceDepth + d)));
+            Move(go, b, new Vector3(x, 0.02f, side * (faceDepth + d))); // on the ground, not in it: thin things vanish in grass and ash
         }
 
         static void Standing(string name, float x, float d, int side, float rotY, float maxSize)
@@ -308,7 +309,7 @@ namespace StandingStonesOfValheim
             go.transform.localRotation = Quaternion.Euler(0f, rotY, 0f);
             Shrink(go, maxSize);
             Bounds b = LocalBounds(go);
-            Move(go, b, new Vector3(x, -0.05f * b.size.y, side * (faceDepth + d)));
+            Move(go, b, new Vector3(x, -0.02f * b.size.y, side * (faceDepth + d)));
         }
 
         static void Shrink(GameObject go, float maxSize)

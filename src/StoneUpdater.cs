@@ -110,7 +110,22 @@ namespace StandingStonesOfValheim
         static void Postfix(string group, Vector3 p, bool maxGroup, ref bool __result)
         {
             if (__result || maxGroup || group != StoneBuilder.Group) return;
-            if (ZoneSystem.IsLavaPreHeightmap(p, 0.6f)) __result = true;
+            if (NearLava(p)) __result = true;
+        }
+
+        // Any lava at all (the game's lava mask above 5%) at the middle or anywhere around the ring, out
+        // to 14 m, so the whole place stands on solid ground.
+        internal static bool NearLava(Vector3 p)
+        {
+            if (ZoneSystem.IsLavaPreHeightmap(p, 0.05f)) return true;
+            for (int ring = 1; ring <= 2; ring++)
+                for (int i = 0; i < 12; i++)
+                {
+                    float rad = (i * 30f + ring * 15f) * Mathf.Deg2Rad;
+                    Vector3 q = p + new Vector3(Mathf.Sin(rad), 0f, Mathf.Cos(rad)) * (ring * 7f);
+                    if (ZoneSystem.IsLavaPreHeightmap(q, 0.05f)) return true;
+                }
+            return false;
         }
     }
 }
