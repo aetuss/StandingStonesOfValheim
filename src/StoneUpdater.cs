@@ -12,6 +12,7 @@ namespace StandingStonesOfValheim
             Heimdall.Tick();
             DailyPower.Tick();
             AltarPanel.Tick();
+            ExistingWorlds.Tick();
         }
     }
 

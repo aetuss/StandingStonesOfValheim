@@ -41,7 +41,7 @@ $used = @("ssov_kind_path", "ssov_kind_always", "ssov_kind_cost", "ssov_kind_dai
     "ssov_read", "ssov_choose", "ssov_is_chosen", "ssov_altar_open") + (@("n", "ne", "e", "se", "s", "sw", "w", "nw") | ForEach-Object { "ssov_dir_" + $_ })
 foreach ($file in Get-ChildItem (Join-Path $root "src") -Filter *.cs) {
     $code = [IO.File]::ReadAllText($file.FullName)
-    $used += [regex]::Matches($code, '"\$?(ssov_[a-z0-9_]+)"') | ForEach-Object { $_.Groups[1].Value } | Where-Object { $_ -notin @("ssov_info", "ssov_goto", "ssov_reset", "ssov_findall") -and -not $_.EndsWith("_") }
+    $used += [regex]::Matches($code, '"\$?(ssov_[a-z0-9_]+)"') | ForEach-Object { $_.Groups[1].Value } | Where-Object { $_ -notin @("ssov_info", "ssov_goto", "ssov_reset", "ssov_findall", "ssov_placestones") -and -not $_.EndsWith("_") }
     # Every stone has a name, its god's name (the HUD icon), a lore line and an effect text.
     foreach ($m in [regex]::Matches($code, 'new Stone\("([A-Za-z]+)"')) {
         $id = "ssov_" + $m.Groups[1].Value.ToLowerInvariant()

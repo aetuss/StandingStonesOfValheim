@@ -18,10 +18,11 @@ namespace StandingStonesOfValheim
     {
         public const string Guid = "StandingStonesOfValheim";
         public const string ModName = "StandingStonesOfValheim";
-        public const string Version = "1.0.0";
+        public const string Version = "1.1.0";
 
         internal static ConfigEntry<int> CopiesPerStone;
         internal static ConfigEntry<float> StoneSpacing;
+        internal static ConfigEntry<bool> PlaceInExistingWorlds;
         internal static ConfigEntry<KeyboardShortcut> DailyKey;
         internal static ConfigEntry<bool> DebugLog;
 
@@ -34,11 +35,13 @@ namespace StandingStonesOfValheim
             Instance = this;
 
             CopiesPerStone = Config.Bind("1 - World generation", "CopiesPerStone", 3,
-                new ConfigDescription("How many times the game tries to place each stone in its land. A copy that finds no good spot is left out, so a world usually has 2-3 of each. Only used when locations are generated (new world, or genloc for the parts of an old world nobody has been to).",
+                new ConfigDescription("How many of each god's stone a world has. The game tries this many when a world is made; in an older world the missing ones are added once (see PlaceInExistingWorlds). A copy that finds no good spot is left out.",
                     new AcceptableValueRange<int>(1, 10), Admin()));
             StoneSpacing = Config.Bind("1 - World generation", "StoneSpacing", 400f,
                 new ConfigDescription("The least distance in metres between any two standing stones.",
                     new AcceptableValueRange<float>(100f, 3000f), Admin()));
+            PlaceInExistingWorlds = Config.Bind("1 - World generation", "PlaceInExistingWorlds", true,
+                "In a world made before this mod (or missing some stones), the server adds the missing stones once, after the world loads: one of each god's in land already explored (on open, fairly flat ground away from players' buildings and the game's own places), the rest in land nobody has been to yet. Then the world is marked, so it doesn't happen again. ssov_placestones (devcommands) runs it again by hand.");
             DailyKey = Config.Bind("2 - Keys", "DailyPowerKey", new KeyboardShortcut(KeyCode.H),
                 "The key that calls your stone's daily power (Freyja's blessing). Ignored while Alt is held, so Alt+H stays free for other mods.");
             DebugLog = Config.Bind("9 - Debug", "DebugLog", false,

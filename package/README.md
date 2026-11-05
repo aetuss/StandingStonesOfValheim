@@ -2,6 +2,10 @@
 
 Skyrim-style standing stones of the Norse gods, hidden around the world. Find them, choose one, and it guides you: faster skills, blessings, bargains with a cost, or a power once a day.
 
+**Works in new and existing worlds:** install it, load your world, and the stones are there, also in land you've already explored.
+
+Requires [Jötunn](https://thunderstore.io/c/valheim/p/ValheimModding/Jotunn/) (a mod manager installs it for you).
+
 ## What changes?
 
 Sixteen standing stones, one for each of sixteen gods, stand in the wilds of every new world. Each is a tall rune stone with the god's rune glowing on it, a ring of small stones around it and a few things that belong to the god, with a faint light at night. A world has two or three of each god's stone, in the land that fits it, so the stones come in the order you explore: the Meadows' stones on your first days, the Deep North's at the very end.
@@ -62,16 +66,17 @@ Stones you haven't found never show at the altar.
 
 ## New worlds and existing worlds
 
-Valheim decides where locations go when a world is created, and only builds them when someone first comes near.
+- **New world:** the stones are placed with everything else when the world is made.
+- **Existing world:** the first time the world loads with the mod, the server (or you, in single player) adds the stones it's missing, once. For each god, one stone goes into land you've already explored, so you can find stones right away; the rest go into land nobody has been to yet, and appear when somebody gets there. Nothing to do, no `genloc` needed.
 
-- **New world:** the stones are there from the start.
-- **Existing world:** run `genloc` once in the console (needs `devcommands`, as the host or in single player). Stones then appear in parts of the world nobody has visited yet. Land you've already explored doesn't get any.
+In explored land a stone only goes on open, fairly flat ground in its own land, away from water and lava, from the game's own places (dungeons, villages, ruins) and at least 50 m from anything players have built. Trees, bushes and rocks right inside its stone ring are cleared; nothing players built is ever touched. The world remembers that this was done, so it doesn't happen again. You can turn it off with `PlaceInExistingWorlds`.
 
 Stones stand on fairly flat, open ground: trees and rocks keep clear of them, and no stone stands near lava.
 
 ## Configuration
 
-- `CopiesPerStone` (default 3): how many times the game tries to place each god's stone. Only used when locations are generated (new world or `genloc`).
+- `CopiesPerStone` (default 3): how many of each god's stone a world has.
+- `PlaceInExistingWorlds` (default on): add the missing stones to a world made before the mod (see above).
 - `StoneSpacing` (default 400): the least distance in metres between any two stones.
 - `DailyPowerKey` (default H): the key that calls a power stone's power.
 - `Stone - <god>`: every number of every stone (skill gain, bonuses, costs, durations).
@@ -83,6 +88,7 @@ The server's settings (everything except the key and `DebugLog`) are sent to eve
 
 - `ssov_info`: which stones you've found, bound and chosen; and, as the host or in single player, how many of each stone this world has and how far the closest one is.
 - `ssov_goto [stone]` (needs `devcommands`): teleports you to the closest stone of that god (for example `ssov_goto thor`), or without a name to the closest stone you haven't found.
+- `ssov_placestones` (needs `devcommands`, host or single player): adds the stones this world is missing now, the same way as on its first start with the mod (for example after raising `CopiesPerStone`).
 - `ssov_findall` / `ssov_reset` (need `devcommands`, for testing): your character finds every stone / forgets every stone.
 
 ## Translations

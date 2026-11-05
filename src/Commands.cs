@@ -28,7 +28,7 @@ namespace StandingStonesOfValheim
                     List<ZoneSystem.LocationInstance> stones = Instances(null);
                     if (stones.Count == 0)
                     {
-                        args.Context.AddString("This world has no standing stones. An existing world only gets them after `genloc` (devcommands), and only where nobody has been yet.");
+                        args.Context.AddString("This world has no standing stones yet. With PlaceInExistingWorlds on they are added a little after the world loads; ssov_placestones (devcommands) adds them now.");
                         return;
                     }
                     foreach (Stone stone in Stone.All)
@@ -83,6 +83,15 @@ namespace StandingStonesOfValheim
                     foreach (Stone stone in Stone.Placed()) names.Add(stone.Id);
                     return names;
                 });
+
+            new Terminal.ConsoleCommand("ssov_placestones",
+                "- StandingStonesOfValheim: add the stones this world is missing now (as on a world's first start with the mod, also in explored land); host or single player",
+                args =>
+                {
+                    if (!OnServer(args.Context)) return;
+                    args.Context.AddString("Looking for missing stones; the result follows here and in the log.");
+                    ExistingWorlds.RunNow(args.Context);
+                }, true);
 
             new Terminal.ConsoleCommand("ssov_reset",
                 "- StandingStonesOfValheim: this character forgets every standing stone (for testing)",
