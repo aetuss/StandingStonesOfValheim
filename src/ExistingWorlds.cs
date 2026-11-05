@@ -207,14 +207,29 @@ namespace StandingStonesOfValheim
                     {
                         Vector3 spot;
                         bool explored;
+                        ResetWhy();
                         if (round == 1)
                         {
-                            if (!FindExplored(stone, generated, index, stones, random, out spot)) break;
+                            if (!FindExplored(stone, generated, index, stones, random, out spot))
+                            {
+                                Plugin.Debug("Stones in existing worlds: no spot in explored land for " + stone.Id + " (turned down: " + WhyText() + ")");
+                                break;
+                            }
                             explored = true;
                         }
-                        else if (FindUnexplored(stone, unexplored, stones, random, out spot)) explored = false;
-                        else if (FindExplored(stone, generated, index, stones, random, out spot)) explored = true;
-                        else break;
+                        else
+                        {
+                            Found found = new Found();
+                            yield return Plugin.Instance.StartCoroutine(FindUnexplored(stone, unexplored, stones, random, found));
+                            spot = found.Spot;
+                            if (found.Ok) explored = false;
+                            else if (FindExplored(stone, generated, index, stones, random, out spot)) explored = true;
+                            else
+                            {
+                                Plugin.Debug("Stones in existing worlds: no spot anywhere for another " + stone.Id + " (turned down: " + WhyText() + ")");
+                                break;
+                            }
+                        }
                         if (explored) Build(location, stone, spot, index, random);
                         else
                         {
@@ -288,6 +303,28 @@ namespace StandingStonesOfValheim
 
         // Ground that suits the stone: its land (well inside it), the right height above the sea, fairly
         // flat around, no lava, away from other stones and from the game's other locations.
+        // Why spots were turned down, counted for the log (DebugLog), so a land with no stone can be explained.
+        enum Why { Building, Height, Land, NearStone, NearPlace, LandEdge, Slope, Lava, BigRock, Count }
+        static readonly int[] why = new int[(int)Why.Count];
+
+        static void ResetWhy() { System.Array.Clear(why, 0, why.Length); }
+
+        static string WhyText()
+        {
+            List<string> parts = new List<string>();
+            for (int i = 0; i < why.Length; i++)
+                if (why[i] > 0) parts.Add(((Why)i).ToString() + " " + why[i]);
+            return parts.Count == 0 ? "no spots looked at" : string.Join(", ", parts.ToArray());
+        }
+
+        static bool No(Why reason)
+        {
+            why[(int)reason]++;
+            return false;
+        }
+
+        const float MaxSlope = 2.5f; // metres up and down within 12 m, as the game asks of its locations
+
         static bool Suits(Stone stone, Vector3 p, List<Vector3> stones, out float height)
         {
             WorldGenerator world = WorldGenerator.instance;
@@ -295,27 +332,27 @@ namespace StandingStonesOfValheim
             float altitude = height - 30f; // above the sea
             float min = stone.Coast ? 0.6f : stone.Biome == Heightmap.Biome.Swamp ? 0.1f : 1f;
             float max = stone.Coast ? 4f : 1000f;
-            if (altitude < min || altitude > max) return false;
-            if ((world.GetBiome(p) & stone.Biome) == 0) return false;
+            if (altitude < min || altitude > max) return No(Why.Height);
+            if ((world.GetBiome(p) & stone.Biome) == 0) return No(Why.Land);
             // Cheap checks first: other stones, the game's own locations (dungeons, villages, ruins...).
             float spacing = Plugin.StoneSpacing.Value;
             foreach (Vector3 s in stones)
-                if (new Vector2(s.x - p.x, s.z - p.z).sqrMagnitude < spacing * spacing) return false;
+                if (new Vector2(s.x - p.x, s.z - p.z).sqrMagnitude < spacing * spacing) return No(Why.NearStone);
             Vector2s zone = ZoneSystem.GetZone(p);
             for (int dx = -1; dx <= 1; dx++)
                 for (int dy = -1; dy <= 1; dy++)
                 {
                     ZoneSystem.LocationInstance other;
                     if (!ZoneSystem.instance.m_locationInstances.TryGetValue(new Vector2s(zone.x + dx, zone.y + dy), out other) || other.m_location == null) continue;
-                    if (dx == 0 && dy == 0) return false; // one location per zone
+                    if (dx == 0 && dy == 0) return No(Why.NearPlace); // one location per zone
                     float keep = Mathf.Max(other.m_location.m_exteriorRadius, other.m_location.m_interiorRadius) + 20f;
-                    if (new Vector2(other.m_position.x - p.x, other.m_position.z - p.z).sqrMagnitude < keep * keep) return false;
+                    if (new Vector2(other.m_position.x - p.x, other.m_position.z - p.z).sqrMagnitude < keep * keep) return No(Why.NearPlace);
                 }
             if (!stone.Coast)
                 for (int i = 0; i < 4; i++)
                 {
                     float rad = i * Mathf.PI / 2f;
-                    if ((world.GetBiome(p + new Vector3(Mathf.Sin(rad), 0f, Mathf.Cos(rad)) * 24f) & stone.Biome) == 0) return false;
+                    if ((world.GetBiome(p + new Vector3(Mathf.Sin(rad), 0f, Mathf.Cos(rad)) * 24f) & stone.Biome) == 0) return No(Why.LandEdge);
                 }
             float low = height, high = height;
             for (int ring = 1; ring <= 2; ring++)
@@ -325,9 +362,9 @@ namespace StandingStonesOfValheim
                     float h = world.GetHeight(p.x + Mathf.Sin(rad) * ring * 6f, p.z + Mathf.Cos(rad) * ring * 6f);
                     low = Mathf.Min(low, h);
                     high = Mathf.Max(high, h);
+                    if (high - low > MaxSlope) return No(Why.Slope);
                 }
-            if (high - low > 2f) return false;
-            if (LavaCheck.NearLava(p)) return false;
+            if (LavaCheck.NearLava(p)) return No(Why.Lava);
             return true;
         }
 
@@ -362,14 +399,14 @@ namespace StandingStonesOfValheim
                     Vector3 p = center + new Vector3((float)random.NextDouble() * 48f - 24f, 0f, (float)random.NextDouble() * 48f - 24f);
                     bool blocked = false;
                     foreach (ZDO building in Near(index.Buildings, p, BuildingDistance)) { blocked = true; break; }
-                    if (blocked) continue;
+                    if (blocked) { No(Why.Building); continue; }
                     float height;
                     if (!Suits(stone, p, stones, out height)) continue;
                     p.y = height;
                     float score = 0f;
                     foreach (ZDO thing in Near(index.Nature, p, bigRocks))
                     {
-                        if (KindOf(thing.GetPrefab()) == Thing.BigRock) { blocked = true; break; }
+                        if (KindOf(thing.GetPrefab()) == Thing.BigRock) { blocked = true; No(Why.BigRock); break; }
                         Vector3 q = thing.GetPosition();
                         if (new Vector2(q.x - p.x, q.z - p.z).sqrMagnitude <= NaturalScoreRadius * NaturalScoreRadius) score += 1f;
                     }
@@ -385,9 +422,17 @@ namespace StandingStonesOfValheim
 
         // A random good spot where nobody has been yet (the game builds it when somebody gets there), from
         // the zones of the stone's land (for the shore stone: land and sea zones, the shore is between).
-        static bool FindUnexplored(Stone stone, Dictionary<Vector2s, Heightmap.Biome> unexplored, List<Vector3> stones, System.Random random, out Vector3 spot)
+        // Bumpy lands (mountains, the Mistlands) have few flat spots, so every zone of the land may be
+        // looked at; it runs a slice at a time so the game doesn't stop.
+        class Found
         {
-            spot = Vector3.zero;
+            internal bool Ok;
+            internal Vector3 Spot;
+        }
+
+        static IEnumerator FindUnexplored(Stone stone, Dictionary<Vector2s, Heightmap.Biome> unexplored, List<Vector3> stones, System.Random random, Found result)
+        {
+            result.Ok = false;
             Heightmap.Biome lands = stone.Coast ? stone.Biome | Heightmap.Biome.Ocean : stone.Biome;
             List<Vector2s> candidates = new List<Vector2s>();
             foreach (KeyValuePair<Vector2s, Heightmap.Biome> pair in unexplored)
@@ -397,20 +442,21 @@ namespace StandingStonesOfValheim
                 int j = random.Next(i + 1);
                 Vector2s swap = candidates[i]; candidates[i] = candidates[j]; candidates[j] = swap;
             }
-            for (int z = 0; z < candidates.Count && z < 3000; z++)
+            for (int z = 0; z < candidates.Count; z++)
             {
                 Vector3 center = ZoneSystem.GetZonePos(candidates[z]);
-                for (int tries = 0; tries < 3; tries++)
+                for (int tries = 0; tries < 5; tries++)
                 {
                     Vector3 p = center + new Vector3((float)random.NextDouble() * 48f - 24f, 0f, (float)random.NextDouble() * 48f - 24f);
                     float height;
                     if (!Suits(stone, p, stones, out height)) continue;
                     p.y = height;
-                    spot = p;
-                    return true;
+                    result.Spot = p;
+                    result.Ok = true;
+                    yield break;
                 }
+                if (z % 150 == 149) yield return null;
             }
-            return false;
         }
     }
 }
