@@ -164,53 +164,105 @@ namespace StandingStonesOfValheim
                 counts[stone.Id] = n + 1;
             }
 
+            // The land of every zone nobody has been to yet (and with no location), worked out once: a small
+            // land like the Meadows is only a few hundred of the world's ~25,000 zones, too few to hit by
+            // picking zones at random.
+            Dictionary<Vector2s, Heightmap.Biome> unexplored = new Dictionary<Vector2s, Heightmap.Biome>();
+            const int reach = 158; // zones out from the middle: a 10 km world radius
+            int checkedZones = 0;
+            for (int x = -reach; x <= reach; x++)
+            {
+                for (int y = -reach; y <= reach; y++)
+                {
+                    Vector2s zone = new Vector2s(x, y);
+                    Vector3 center = ZoneSystem.GetZonePos(zone);
+                    if (center.magnitude > 9800f || generated.Contains(zone) || zones.m_locationInstances.ContainsKey(zone)) continue;
+                    unexplored[zone] = WorldGenerator.instance.GetBiome(center);
+                    checkedZones++;
+                }
+                if (x % 16 == 0) yield return null;
+            }
+            Plugin.Debug("Stones in existing worlds: " + checkedZones + " unexplored zones, " + generated.Count + " explored");
+
             System.Random random = new System.Random(WorldGenerator.instance.GetSeed() ^ 0x55a1);
+            Dictionary<string, int> placed = new Dictionary<string, int>();
+            Dictionary<string, int> placedExplored = new Dictionary<string, int>();
+            // Round 1: one stone of each god in explored land, so no god takes all of a small explored
+            // patch. Round 2: the rest where nobody has been yet (explored land if there's no room there).
+            for (int round = 1; round <= 2; round++)
+            {
+                foreach (Stone stone in Stone.All)
+                {
+                    ZoneSystem.ZoneLocation location = null;
+                    foreach (ZoneSystem.ZoneLocation l in zones.m_locations)
+                        if (l != null && l.m_prefabName == stone.LocationName) { location = l; break; }
+                    if (location == null) continue;
+                    int have, done;
+                    counts.TryGetValue(stone.Id, out have);
+                    placed.TryGetValue(stone.Id, out done);
+                    int missing = Plugin.CopiesPerStone.Value - have - done;
+                    if (missing <= 0) continue;
+                    if (round == 1) missing = 1;
+                    for (int copy = 0; copy < missing; copy++)
+                    {
+                        Vector3 spot;
+                        bool explored;
+                        if (round == 1)
+                        {
+                            if (!FindExplored(stone, generated, index, stones, random, out spot)) break;
+                            explored = true;
+                        }
+                        else if (FindUnexplored(stone, unexplored, stones, random, out spot)) explored = false;
+                        else if (FindExplored(stone, generated, index, stones, random, out spot)) explored = true;
+                        else break;
+                        if (explored) Build(location, stone, spot, index, random);
+                        else
+                        {
+                            registerLocation.Invoke(zones, new object[] { location, spot, false });
+                            unexplored.Remove(ZoneSystem.GetZone(spot));
+                        }
+                        stones.Add(spot);
+                        Add(placed, stone.Id);
+                        if (explored) Add(placedExplored, stone.Id);
+                        yield return null;
+                    }
+                    yield return null;
+                }
+            }
+
             int inExplored = 0, inUnexplored = 0;
             List<string> report = new List<string>();
             foreach (Stone stone in Stone.All)
             {
-                ZoneSystem.ZoneLocation location = null;
-                foreach (ZoneSystem.ZoneLocation l in zones.m_locations)
-                    if (l != null && l.m_prefabName == stone.LocationName) { location = l; break; }
-                if (location == null) continue;
-                int have;
-                counts.TryGetValue(stone.Id, out have);
-                int missing = Plugin.CopiesPerStone.Value - have;
-                int placedHere = 0, explored = 0;
-                for (int copy = 0; copy < missing; copy++)
-                {
-                    // The first one goes where players have been, so an old world has stones to find now.
-                    bool wantExplored = copy == 0;
-                    Vector3 spot = Vector3.zero;
-                    bool found = wantExplored && FindExplored(stone, generated, index, stones, random, out spot);
-                    if (found)
-                    {
-                        Build(location, stone, spot, index, random);
-                        explored++;
-                    }
-                    else
-                    {
-                        found = FindUnexplored(stone, generated, stones, random, out spot);
-                        if (!found) found = FindExplored(stone, generated, index, stones, random, out spot);
-                        if (!found) break;
-                        if (generated.Contains(ZoneSystem.GetZone(spot))) { Build(location, stone, spot, index, random); explored++; }
-                        else registerLocation.Invoke(zones, new object[] { location, spot, false });
-                    }
-                    stones.Add(spot);
-                    placedHere++;
-                    yield return null;
-                }
-                inExplored += explored;
-                inUnexplored += placedHere - explored;
-                if (placedHere > 0) report.Add(stone.Id + " " + placedHere + (explored > 0 ? " (" + explored + " in explored land)" : ""));
-                yield return null;
+                int n, e;
+                if (!placed.TryGetValue(stone.Id, out n)) continue;
+                placedExplored.TryGetValue(stone.Id, out e);
+                inExplored += e;
+                inUnexplored += n - e;
+                report.Add(stone.Id + " " + n + (e > 0 ? " (" + e + " in explored land)" : ""));
             }
+            List<string> short_ = new List<string>();
+            foreach (Stone stone in Stone.All)
+            {
+                int have, n;
+                counts.TryGetValue(stone.Id, out have);
+                placed.TryGetValue(stone.Id, out n);
+                if (have + n < Plugin.CopiesPerStone.Value) short_.Add(stone.Id + " " + (have + n));
+            }
+            if (short_.Count > 0) Plugin.Log.LogInfo("Stones in existing worlds: no good spot left for every copy of: " + string.Join(", ", short_.ToArray()) + " (stones now in the world)");
 
             zones.SetGlobalKey(DoneKey);
             string summary = report.Count == 0 ? "every god already had its stones; nothing added."
                 : "added " + (inExplored + inUnexplored) + " stones, " + inExplored + " in explored land and " + inUnexplored + " where nobody has been yet: " + string.Join(", ", report.ToArray()) + ".";
             Plugin.Log.LogInfo("Stones in existing worlds: " + summary);
             if (context != null) context.AddString("Stones in existing worlds: " + summary);
+        }
+
+        static void Add(Dictionary<string, int> map, string id)
+        {
+            int n;
+            map.TryGetValue(id, out n);
+            map[id] = n + 1;
         }
 
         // Builds the stone at once in a zone that already exists, as the game does when it generates a
@@ -331,23 +383,32 @@ namespace StandingStonesOfValheim
             return best < float.MaxValue;
         }
 
-        // A random good spot where nobody has been yet (the game builds it when somebody gets there).
-        static bool FindUnexplored(Stone stone, HashSet<Vector2s> generated, List<Vector3> stones, System.Random random, out Vector3 spot)
+        // A random good spot where nobody has been yet (the game builds it when somebody gets there), from
+        // the zones of the stone's land (for the shore stone: land and sea zones, the shore is between).
+        static bool FindUnexplored(Stone stone, Dictionary<Vector2s, Heightmap.Biome> unexplored, List<Vector3> stones, System.Random random, out Vector3 spot)
         {
             spot = Vector3.zero;
-            const int reach = 158; // zones out from the middle: a 10 km world radius
-            for (int tries = 0; tries < 4000; tries++)
+            Heightmap.Biome lands = stone.Coast ? stone.Biome | Heightmap.Biome.Ocean : stone.Biome;
+            List<Vector2s> candidates = new List<Vector2s>();
+            foreach (KeyValuePair<Vector2s, Heightmap.Biome> pair in unexplored)
+                if ((pair.Value & lands) != 0 && !ZoneSystem.instance.m_locationInstances.ContainsKey(pair.Key)) candidates.Add(pair.Key);
+            for (int i = candidates.Count - 1; i > 0; i--)
             {
-                Vector2s zone = new Vector2s(random.Next(-reach, reach + 1), random.Next(-reach, reach + 1));
-                Vector3 center = ZoneSystem.GetZonePos(zone);
-                if (center.magnitude > 9800f || generated.Contains(zone) || ZoneSystem.instance.m_locationInstances.ContainsKey(zone)) continue;
-                if (!stone.Coast && (WorldGenerator.instance.GetBiome(center) & stone.Biome) == 0) continue;
-                Vector3 p = center + new Vector3((float)random.NextDouble() * 48f - 24f, 0f, (float)random.NextDouble() * 48f - 24f);
-                float height;
-                if (!Suits(stone, p, stones, out height)) continue;
-                p.y = height;
-                spot = p;
-                return true;
+                int j = random.Next(i + 1);
+                Vector2s swap = candidates[i]; candidates[i] = candidates[j]; candidates[j] = swap;
+            }
+            for (int z = 0; z < candidates.Count && z < 3000; z++)
+            {
+                Vector3 center = ZoneSystem.GetZonePos(candidates[z]);
+                for (int tries = 0; tries < 3; tries++)
+                {
+                    Vector3 p = center + new Vector3((float)random.NextDouble() * 48f - 24f, 0f, (float)random.NextDouble() * 48f - 24f);
+                    float height;
+                    if (!Suits(stone, p, stones, out height)) continue;
+                    p.y = height;
+                    spot = p;
+                    return true;
+                }
             }
             return false;
         }
